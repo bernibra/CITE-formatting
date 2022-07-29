@@ -1,5 +1,13 @@
 library(ggplot2)
 library(GEOquery)
+library(markdown)
+
+labelMandatory <- function(label) {
+  tagList(
+    label,
+    span("*", class = "mandatory_star")
+  )
+}
 
 get_pdata <- function(geo_id){
   granja <- getGEO(geo_id)
@@ -17,6 +25,7 @@ srvTable <- function(id, dat) { shiny::moduleServer(id,
 server <- function(input, output) {
   
   # values <- reactiveValues(setup = NULL, download=NULL, enableGEO=F)
+  values<-reactiveValues()
   
   # Once the data downloading strategy has been selected, move to the next screen
   output$steptwo = renderUI({
@@ -27,14 +36,18 @@ server <- function(input, output) {
       shinyjs::disable("downloadData")
       
     }else if(input$dataset=="impossible"){
-      tagList(textInput("source", "data source (url link)"),
-      textAreaInput("comment", "comment on how to download", paste0("... and store the adt data in `./supp_protein/",input$alias,
+      tagList(
+        h4("Download"),
+        textInput("source", "data source (url link)"),
+        textAreaInput("comment", "comment on how to download", paste0("... and store the adt data in `./supp_protein/",input$alias,
                                                                     "/`, the RNA data in `./supp_rna/",input$alias,
                                                                     "/`, the HTO data in `./supp_hto/",input$alias,
                                                                     "/`, and the metadata in `./metadata/`"), width = "100%"),
       shinyjs::enable("downloadData"))
     }else if(input$dataset=="geo"){
-      tagList(textInput("id", labelMandatory("GEO id")),
+      tagList(
+              h4("Download"),
+              textInput("id", labelMandatory("GEO id")),
               radioButtons('geodownload', 
                            label=labelMandatory("download type"),
                            choices = c("Nothing selected"="na",'download via GEOquery'="geo", "direct download"="wget"),
@@ -63,22 +76,23 @@ server <- function(input, output) {
   observeEvent(input$dataset,
                {
                  if (input$dataset=="na") {
-                   output$selected_var <-
-                     renderText({
-                       "There is some basic information that one should fill in to characterize a particular dataset. Basic description of what this app is supposed to do"
-                     })
+                   output$selected_var <- renderUI({includeMarkdown("../docu/entry-page.md")})
+                 }else if(input$dataset=="impossible"){
+                   output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
                  }else{
                    output$selected_var <- NULL
                  }
                })
   
   observeEvent(input$geo_download_button, {
-    message("CLICK!")
     pdata <- get_pdata(input$id)
-    print(pdata)
-    
+
+    print(nrow(pdata))
     output$stepfour = renderUI({
-      selectInput("columns", "select column", colnames(pdata))
+      tagList(
+        selectInput("columns", "select column", colnames(pdata)),
+        p("To filter out the different files, we need to select a column of the GEO metadata.")
+      )
     })
     srvTable("tablegeo", pdata)
     

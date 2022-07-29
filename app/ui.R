@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(DT)
 
 labelMandatory <- function(label) {
@@ -15,7 +16,6 @@ tabTable <- function(id) {
     DTOutput(ns("table"))
   )
 }
-
 
 # CSS to use in the app
 appCSS <-
@@ -48,9 +48,27 @@ ui <- fluidPage(
           )
         ),
   ),
-  # Sidebar panel for inputs ----
+  tags$head(tags$style(type="text/css", "
+             #loadmessage {
+               position: fixed;
+               top: 0px;
+               left: 0px;
+               width: 100%;
+               padding: 5px 0px 5px 0px;
+               text-align: center;
+               font-weight: bold;
+               font-size: 100%;
+               color: #000000;
+               background-color: #fde0dd;
+               z-index: 105;
+             }
+          ")),
+
+  conditionalPanel(condition="$('html').hasClass('shiny-busy')",
+                   tags$div("Loading...",id="loadmessage")),
   fluidRow(
     column(12, 
+      h4("Metadata"),
       fluidRow(
        column(6,
         
@@ -89,10 +107,11 @@ ui <- fluidPage(
     # Output: Histogram ----
     # plotOutput("hist")
     column(12, 
-           textOutput("selected_var"),
+           uiOutput("selected_var"),
            # shinycssloaders::withSpinner(
            # DT::dataTableOutput("geotable")
            # )
+           uiOutput("main"),
            tabTable("tablegeo"),
     )
   )
