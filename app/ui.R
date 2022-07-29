@@ -70,49 +70,65 @@ ui <- fluidPage(
     column(12, 
       h4("Metadata"),
       fluidRow(
-       column(6,
+        column(6,
         
-        # numericInput("lambda1", label = "lambda1", value = 3),
-        # numericInput("lambda2", label = "lambda2", value = 5),
-        # numericInput("n", label = "n", value = 1e4, min = 0),
-        # actionButton("simulate", "Simulate!")
-        
-        textInput("doi", labelMandatory("doi of the experiment"), placeholder = "doi.org/10.1038/s41591-021-01329-2"),
-        textInput("alias", labelMandatory("a unique alias"), placeholder ="Stephenson2021"),
-        radioButtons('dataset', 
-                    label = labelMandatory('choose Dataset'), 
-                    choices = c("nothing selected"="na",'GEO'="geo", "ArrayExpress"="array", "direct download"="wget", "manual download"="impossible"),
-                    selected = "na"),
-       ),
-       column(6,
-              textInput("species", "species", placeholder = "Homo sapiens"),
-              textInput("tissue", "tissue", placeholder = "PBMC"),
-              textInput("genome_build", "genome build:", placeholder = "GRCh38"),
-              textAreaInput("description", "experiment summary"),
-       ),
+          textInput("doi", labelMandatory("doi of the experiment"), placeholder = "doi.org/10.1038/s41591-021-01329-2"),
+          textInput("alias", labelMandatory("a unique alias"), placeholder ="Stephenson2021"),
+          radioButtons('dataset', 
+                      label = labelMandatory('choose Dataset'), 
+                      choices = c("nothing selected"="na",'GEO'="geo", "ArrayExpress"="array", "direct download"="wget", "manual download"="impossible"),
+                      selected = "na"),
+        ),
+        column(6,
+          textInput("species", "species", placeholder = "Homo sapiens"),
+          textInput("tissue", "tissue", placeholder = "PBMC"),
+          textInput("genome_build", "genome build:", placeholder = "GRCh38"),
+          textAreaInput("description", "experiment summary"),
+        ),
       ),
       hr()
     ),
-    column(6,
-           uiOutput('steptwo')
+    column(12,
+      fluidRow(
+        column(6,
+          uiOutput('download_steptwo')
+        ),
+        column(6,
+          fluidRow(
+            br(),
+            uiOutput('download_stepthree'),
+            uiOutput('download_stepfour')
+          )
+        ),
+      )
     ),
-    column(6,
+    column(12,
            fluidRow(
-             br(),
-             uiOutput('stepthree'),
-             uiOutput('stepfour')
+             column(6,
+                    uiOutput('load_stepone')
+             ),
+             column(6,
+                    uiOutput('load_steptwo')
+             ),
            )
     ),
-    # Main panel for displaying outputs ----
-    # Output: Histogram ----
-    # plotOutput("hist")
     column(12, 
-           uiOutput("selected_var"),
-           # shinycssloaders::withSpinner(
-           # DT::dataTableOutput("geotable")
-           # )
-           uiOutput("main"),
-           tabTable("tablegeo"),
+      uiOutput("selected_var"),
+      uiOutput("main"),
+      br(),
+      hr(),
+      br(),
+      fluidRow(
+        column(4, 
+          tableOutput("tablegeo_protein")
+        ),
+        column(4, 
+          tableOutput("tablegeo_rna")
+        ),
+        column(4,
+          tableOutput("tablegeo_hto")
+        )
+      ),
     )
   )
 )
