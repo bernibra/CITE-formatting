@@ -1,10 +1,24 @@
 library(ggplot2)
+library(GEOquery)
+
+get_pdata <- function(geo_id){
+  granja <- getGEO(geo_id)
+    # Get pData for each element and concatenate tables
+  return(purrr::map(granja, pData) %>% dplyr::bind_rows())
+}
+
+srvTable <- function(id, dat) { shiny::moduleServer(id,
+                                                    function(input, output, session) {
+                                                      output$table <- renderDT({DT::datatable(dat)})
+                                                    }
+)}
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
   # values <- reactiveValues(setup = NULL, download=NULL, enableGEO=F)
   
+  # Once the data downloading strategy has been selected, move to the next screen
   output$steptwo = renderUI({
     # print(input)
     
@@ -20,9 +34,9 @@ server <- function(input, output) {
                                                                     "/`, and the metadata in `./metadata/`"), width = "100%"),
       shinyjs::enable("downloadData"))
     }else if(input$dataset=="geo"){
-      tagList(textInput("id", "GEO id"),
+      tagList(textInput("id", labelMandatory("GEO id")),
               radioButtons('geodownload', 
-                           label="",
+                           label=labelMandatory("download type"),
                            choices = c("Nothing selected"="na",'download via GEOquery'="geo", "direct download"="wget"),
                            selected = "na")
              )
@@ -31,20 +45,20 @@ server <- function(input, output) {
       shinyjs::enable("downloadData"))
     }
   })
-  
+
+  # GEO download  
   output$stepthree = renderUI({
     condition <- input$doi!="" & input$alias!=""
     
     if (!is.null(input$geodownload) & input$dataset!="na" & condition){
-      if(input$geodownload=="na"){
+      if(input$geodownload=="na" | input$id==""){
       }else if(input$geodownload=="geo"){
-        renderText({"geo option"})
+        actionButton("geo_download_button", "load GEO")
       }else{
         renderText({"wget option"})
       }
     }
   })
-  
 
   observeEvent(input$dataset,
                {
@@ -53,11 +67,26 @@ server <- function(input, output) {
                      renderText({
                        "There is some basic information that one should fill in to characterize a particular dataset. Basic description of what this app is supposed to do"
                      })
-                 } else{
+                 }else{
                    output$selected_var <- NULL
                  }
                })
   
+  observeEvent(input$geo_download_button, {
+    message("CLICK!")
+    pdata <- get_pdata(input$id)
+    print(pdata)
+    
+    output$stepfour = renderUI({
+      selectInput("columns", "select column", colnames(pdata))
+    })
+    srvTable("tablegeo", pdata)
+    
+    # output$geodata <- renderDataTable({#
+    #   DT::datatable(pdata)
+    # }) 
+  })
+    
   
   output$downloadData <- downloadHandler(
     filename = function() {

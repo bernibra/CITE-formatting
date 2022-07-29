@@ -1,4 +1,5 @@
 library(shiny)
+library(DT)
 
 labelMandatory <- function(label) {
   tagList(
@@ -6,6 +7,15 @@ labelMandatory <- function(label) {
     span("*", class = "mandatory_star")
   )
 }
+
+tabTable <- function(id) {
+  ns <- shiny::NS(id)
+  tabPanel(
+    "Table",
+    DTOutput(ns("table"))
+  )
+}
+
 
 # CSS to use in the app
 appCSS <-
@@ -24,18 +34,18 @@ ui <- fluidPage(
   title = "Prepare CITE-seq dataset",
   div(id = "header",
       fluidRow(
-        column(9,
+        column(12,
           h1("Prepare CITE-seq dataset"),
-        ),
-        column(3, align="center",
-               downloadButton('downloadData', 'Download')
         )),
         fluidRow(
-          column(12,
-          h4("This is an app designed to help adding new datasets to the",
+          column(9,
+          h4("An app designed to help adding new datasets to ",
              a(href = "https://github.com/bernibra/CITE-wrangling",
-               "CITE-wrangling pipeline")
-          ))
+               "CITE-wrangling")
+          )),
+          column(3, align="center",
+                 downloadButton('downloadData', 'Download')
+          )
         ),
   ),
   # Sidebar panel for inputs ----
@@ -65,18 +75,25 @@ ui <- fluidPage(
       ),
       hr()
     ),
-    column(12,
+    column(6,
            uiOutput('steptwo')
     ),
-    column(12,
-           uiOutput('stepthree')
+    column(6,
+           fluidRow(
+             br(),
+             uiOutput('stepthree'),
+             uiOutput('stepfour')
+           )
     ),
     # Main panel for displaying outputs ----
     # Output: Histogram ----
     # plotOutput("hist")
     column(12, 
-           textOutput("selected_var")
-           ),
-
+           textOutput("selected_var"),
+           # shinycssloaders::withSpinner(
+           # DT::dataTableOutput("geotable")
+           # )
+           tabTable("tablegeo"),
+    )
   )
 )
