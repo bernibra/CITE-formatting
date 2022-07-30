@@ -40,3 +40,6 @@ vignettes/*.pdf
 
 # Ignore all data
 data/
+
+# MAC stuff
+.DS_Store

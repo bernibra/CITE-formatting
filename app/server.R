@@ -97,7 +97,7 @@ server <- function(input, output) {
     values$pdata <- get_pdata(input$id)
     output$download_stepfour = renderUI({
       tagList(
-        selectInput("columns", "select column", c("Not selected"="na", colnames(values$pdata)), selected = "na"),
+        selectInput("columns", labelMandatory("select column"), c("Not selected"="na", colnames(values$pdata)), selected = "na"),
         p("To filter out the different files, we need to select a column of the GEO metadata."),
         checkboxInput("include_hto", "Include HTO data", value = TRUE),
         textInput("keyword_protein", placeholder = "regex for ADT files", label = NULL),
@@ -189,24 +189,27 @@ server <- function(input, output) {
   observeEvent(input$class, {
     if(input$class=="h5"){
       output$extra_class <- renderUI({tagList(
-        textInput("h5key-protein", "protein access key"),
-        textInput("h5key-rna", "RNA access key"),
-        textInput("h5key-hto", "HTO access key"))
+        p("h5 access keys"),
+        textInput("h5key-protein", placeholder = "protein h5 key", label = NULL),
+        textInput("h5key-rna",  placeholder = "RNA h5 key", label = NULL),
+        textInput("h5key-hto", placeholder =  "HTO h5 key", label = NULL))
         })
     }else if(input$class=="access"){
       output$extra_class <- renderUI({tagList(
-        textInput("access-protein", "protein access key"),
-        textInput("access-rna", "RNA access key"),
-        textInput("access-hto", "HTO access key"))
+        p("access keys"),
+        textInput("access-protein",  placeholder = "protein access key", label = NULL),
+        textInput("access-rna",  placeholder = "RNA access key", label = NULL),
+        textInput("access-hto", placeholder =  "HTO access key", label = NULL))
       })
     }else if(input$class=="Seurat"){
       output$extra_class <- renderUI({tagList(
-        textInput("altexp-protein", "protein access key"),
-        textInput("altexp-rna", "RNA access key"),
-        textInput("altexp-hto", "HTO access key"))
+        p("Seurat experiment key"),
+        textInput("altexp-protein",  placeholder = "protein experiment key", label = NULL),
+        textInput("altexp-rna",  placeholder = "RNA experiment key", label = NULL),
+        textInput("altexp-hto", placeholder =  "HTO experiment key", label = NULL))
       })
     }else{
-      
+      output$extra_class <- NULL
     }
   })
   

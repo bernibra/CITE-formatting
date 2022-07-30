@@ -49,7 +49,7 @@ ui <- fluidPage(
         ),
   ),
   tags$head(tags$style(type="text/css", "
-             #loadmessage {
+             .loadmessage {
                position: fixed;
                top: 0px;
                left: 0px;
@@ -63,9 +63,20 @@ ui <- fluidPage(
                z-index: 105;
              }
           ")),
-
-  conditionalPanel(condition="$('html').hasClass('shiny-busy')",
-                   tags$div("Loading...",id="loadmessage")),
+  shiny::div(class="loadmessage",p("Loading...")),
+  shiny::tags$script(sprintf(
+    "	setInterval(function(){
+  		 	 if ($('html').hasClass('shiny-busy')) {
+  		    setTimeout(function() {
+  		      if ($('html').hasClass('shiny-busy')) {
+  		        $('div.loadmessage').show()
+  		      }
+  		    }, %d)  		    
+  		  } else {
+  		    $('div.loadmessage').hide()
+  		  }
+  		},100)
+  		",500)),
   fluidRow(
     column(12, 
       h4("Metadata"),
