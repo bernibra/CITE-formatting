@@ -25,6 +25,8 @@ appCSS <-
    #error { color: red; }
    body { background: #fcfcfc; }
    #header { background: #fff; border-bottom: 1px solid #ddd; margin: -20px -15px 0; padding: 15px 15px 10px; }
+   .loaddata {margin: 5px 1px 5px 1px; background: #f0f0f0;  border-bottom: 0.5px solid #d9d9d9; padding: 15px 15px 10px; font-size: 90%; }
+   .loaddata h4 {font-size: 100%; font-weight: bold;}
   "
 
 # Define UI for app that draws a histogram ----
@@ -115,6 +117,7 @@ ui <- fluidPage(
     ),
     column(12,
            fluidRow(
+             uiOutput("load_line"),
              column(6,
                     uiOutput('load_stepone')
              ),

@@ -26,6 +26,101 @@ regfilter <- function(x, y, z){
   }
 }
 
+##### Module for asking extra attributes to class load
+askextraclass <- function(id){
+  ns <- NS(id)
+  uiOutput(ns("controls"))
+}
+
+askextraclassServer <- function(id, class, typ){
+  moduleServer(
+    id, 
+    function(input, output, session) {
+      if(is.null(class)){
+        output$controls <-  NULL
+      }else if(class=="h5" | class=="h5seurat"){
+        output$controls <-  renderUI({
+          ns <- session$ns
+          tagList(
+            textInput(ns("h5key"),  placeholder = paste(typ, "experiment key", sep=" "),tags$span(style="font-weight: normal;","h5 experiment key"))
+          )
+        })
+      }else if(class=="Seurat"){
+        output$controls <-  renderUI({
+          ns <- session$ns
+          tagList(
+            textInput(ns("altexp"),  placeholder = paste(typ, "experiment key", sep=" "), label = tags$span(style="font-weight: normal;","Seurat experiment key"))
+          )
+        })
+      }else if(class=="mtx"){
+        output$controls <-  renderUI({
+          ns <- session$ns
+          tagList(
+            textInput(ns("features"),  placeholder = "pattern for features file", label = tags$span(style="font-weight: normal;","features")),
+            textInput(ns("cells"),  placeholder = "pattern for cell file", label = tags$span(style="font-weight: normal;","Seurat experiment key")),
+            textInput(ns("replace"),  placeholder = "pattern for matrix file", label = tags$span(style="font-weight: normal;","Seurat experiment key")),
+            numericInput(ns("column"), label = tags$span(style="font-weight: normal;","column used in the features file"),   min = 1,value=1)
+          )
+        })
+      }else if(class=="access"){
+        output$controls <-  renderUI({
+          ns <- session$ns
+          tagList(
+            textInput(ns("access"),  placeholder = paste(typ, "access key", sep=" "), label = tags$span(style="font-weight: normal;","R access key"))
+          )
+        })
+      }else if(class=="rds" | class=="csv" | class=="fastcsv"){
+        output$controls <-  renderUI({
+          ns <- session$ns
+          tagList(
+            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
+            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
+          )
+        })
+      }else{
+        output$controls <-  NULL
+      }
+    }
+  )
+}
+#####
+
+
+##### Module for loading protein, RNA or HTO
+loaddata <- function(id){
+  ns <- NS(id)
+  uiOutput(ns("controls"))
+}
+
+loaddataServer <- function(id, on=T, typ="protein"){
+  moduleServer(
+    id, 
+    function(input, output, session) {
+      if(on){
+        output$controls <- renderUI({
+          ns <- session$ns
+          tagList(div(class="loaddata", 
+            h4(paste(typ, "data", sep=" ")),
+            checkboxInput(ns("transpose"), "transpose", value = FALSE),
+            checkboxInput(ns("separate_samples"), "separate samples", value = TRUE),
+            textInput(ns("keywords_load"), "search file by pattern", placeholder = "e.g. 'CITE$'"),
+            selectInput(ns('class'), 
+                        label="data format",
+                        choices = c("default", "csv", "mtx", "rds", "fastcsv", "h5", "h5seurat", "Seurat", "access", "h5ad"),
+                        selected = "default"),
+            askextraclass(ns('extra_class')),
+            textInput(ns("coldata"), "rows moved to colData", placeholder = "separated by semicolon"),
+           )
+          )
+        })
+      }else{
+        output$controls <- NULL
+      }
+    }
+  )
+}
+#####
+
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
@@ -112,7 +207,9 @@ server <- function(input, output) {
   observeEvent(c(input$columns, input$keyword_protein), {
     if (input$columns!="na") {
        output$selected_var <- NULL
+       output$load_steptwo <- NULL
        output$load_stepone <- NULL
+       output$load_line <- NULL
        output$tablegeo_protein <- renderTable({
          values$pdata %>% select(input$columns) %>% dplyr::rename_with(function(x) "Protein data") %>%  filter_at(1, all_vars(grepl(input$keyword_protein, .)))
      })
@@ -125,7 +222,9 @@ server <- function(input, output) {
   observeEvent(c(input$columns, input$keyword_rna), {
     if (input$columns!="na") {
       output$selected_var <- NULL
+      output$load_line <- NULL
       output$load_stepone <- NULL
+      output$load_steptwo <- NULL
       output$tablegeo_rna <- renderTable({
         values$pdata %>% select(input$columns) %>% dplyr::rename_with(function(x) "RNA data") %>%  filter_at(1, all_vars(grepl(input$keyword_rna, .)))
       })
@@ -139,13 +238,17 @@ server <- function(input, output) {
     if (input$columns!="na" & input$include_hto) {
       output$selected_var <- NULL
       output$load_stepone <- NULL
+      output$load_line <- NULL
+      output$load_steptwo <- NULL
       output$tablegeo_hto <- renderTable({
         values$pdata %>% select(input$columns) %>% dplyr::rename_with(function(x) "HTO data") %>%  filter_at(1, all_vars(grepl(input$keyword_hto, .)))
       })
     }else if(input$columns!="na" & !input$include_hto){
       output$selected_var <- NULL
       output$tablegeo_hto <- NULL
+      output$load_line <- NULL
       output$load_stepone <- NULL
+      output$load_steptwo <- NULL
       output$htoregex <- NULL
     }else{
       output$tablegeo_hto <- NULL
@@ -156,12 +259,13 @@ server <- function(input, output) {
   observeEvent(input$geodone, {
     output$tablegeo_protein <- NULL
     output$tablegeo_rna <- NULL
+    output$load_line <- NULL
     output$tablegeo_hto <- NULL
     output$selected_var <- renderUI({includeMarkdown("../docu/geo-load.md")})
     if(input$columns!="na"){
+      output$load_line = renderUI(hr())
       output$load_stepone = renderUI({
         tagList(
-          hr(),
           h4("Load data"),
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
@@ -173,44 +277,35 @@ server <- function(input, output) {
       })
       output$load_steptwo = renderUI({
         tagList(
-          hr(),
-          checkboxInput("transpose", "transpose", value = FALSE),
-          selectInput('class', 
-                       label="data format",
-                       choices = c("default", "csv", "mtx", "rds", "fastcsv", "h5", "h5seurat", "Seurat", "access", "h5ad"),
-                       selected = "default"),
-          uiOutput('extra_class'),
-          textInput("coldata", "rows moved to colData", placeholder = "separated by semicolon"),
+          checkboxInput("separate_protocols", "separate protocols for ADT and RNA data", value = FALSE),
+          loaddata("load_protein"),
+          loaddata("load_rna"),
+          loaddata("load_hto")
         )
       })
     }
   })
   
-  observeEvent(input$class, {
-    if(input$class=="h5"){
-      output$extra_class <- renderUI({tagList(
-        p("h5 access keys"),
-        textInput("h5key-protein", placeholder = "protein h5 key", label = NULL),
-        textInput("h5key-rna",  placeholder = "RNA h5 key", label = NULL),
-        textInput("h5key-hto", placeholder =  "HTO h5 key", label = NULL))
-        })
-    }else if(input$class=="access"){
-      output$extra_class <- renderUI({tagList(
-        p("access keys"),
-        textInput("access-protein",  placeholder = "protein access key", label = NULL),
-        textInput("access-rna",  placeholder = "RNA access key", label = NULL),
-        textInput("access-hto", placeholder =  "HTO access key", label = NULL))
-      })
-    }else if(input$class=="Seurat"){
-      output$extra_class <- renderUI({tagList(
-        p("Seurat experiment key"),
-        textInput("altexp-protein",  placeholder = "protein experiment key", label = NULL),
-        textInput("altexp-rna",  placeholder = "RNA experiment key", label = NULL),
-        textInput("altexp-hto", placeholder =  "HTO experiment key", label = NULL))
-      })
+  observeEvent(input$separate_protocols, {
+    if(input$separate_protocols & input$include_hto){
+      loaddataServer("load_protein", on=T, typ="protein")
+      loaddataServer("load_rna", on=T, typ="rna")
+      loaddataServer("load_hto", on=T, typ="hto")
+    }else if(input$separate_protocols & !input$include_hto){
+      loaddataServer("load_protein", on=T, typ="protein")
+      loaddataServer("load_rna", on=T, typ="rna")
+      loaddataServer("load_hto", on=F, typ="hto")
     }else{
-      output$extra_class <- NULL
+      loaddataServer("load_protein", on=T, typ="protein")
+      loaddataServer("load_rna", on=F, typ="rna")
+      loaddataServer("load_hto", on=F, typ="hto")
     }
+  })
+  
+  observeEvent(c(input[["load_protein-class"]], input[["load_rna-class"]], input[["load_hto-class"]]), {
+    askextraclassServer('load_protein-extra_class', class=input[["load_protein-class"]], typ="protein")
+    askextraclassServer('load_rna-extra_class', class=input[["load_rna-class"]], typ="rna")
+    askextraclassServer('load_hto-extra_class', class=input[["load_hto-class"]], typ="hto")
   })
   
   
