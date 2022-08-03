@@ -400,7 +400,7 @@ server <- function(input, output) {
       output$load_stepone = renderUI({
         tagList(
           h4("Load data"),
-          includeMarkdown("../docu/geo-load2.md"),
+          includeMarkdown("../docu/geo-load-2.md"),
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
                       , selected = "na"),
