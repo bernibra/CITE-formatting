@@ -125,45 +125,77 @@ loaddataServer <- function(id, on=T, typ="protein"){
 }
 #####
 #####
-addDownloadlink <-function(id, name){
+addDownloadlink <-function(id, name, mandatory=FALSE){
   ns <- NS(id)
-  tagList(
-    br(),
-    br(),
-    p(style="font-weight: bold;", paste(name, "files", sep=" ")),
-    actionButton(ns("show"), "add metadata"),
-    br(),
-    br(),
-    p("added files:"),    
-    verbatimTextOutput(ns("dataInfo"))
+  if(mandatory){
+    tagList(
+      br(),
+      br(),
+      p(style="font-weight: bold;", labelMandatory(paste(name, "files", sep=" "))),
+      actionButton(ns("show"), "add data"),
+      br(),
+      br(),
+      p("added files:"),    
+      verbatimTextOutput(ns("dataInfo"))
     )
+  }else{
+    tagList(
+      br(),
+      br(),
+      p(style="font-weight: bold;", paste(name, "files", sep=" ")),
+      actionButton(ns("show"), "add data"),
+      br(),
+      br(),
+      p("added files:"),    
+      verbatimTextOutput(ns("dataInfo"))
+    )
+  }
 }
 
-dataModal <- function(ns, failed = FALSE) {
+dataModal <- function(ns, failed = FALSE, withoutlink=F) {
   # Popup for download links addition
-  modalDialog(
-    
-    textInput(ns("file"), "file name",
-              placeholder = 'e.g. metadata.csv'
-    ),
-    span('make sure the file name has the right extension'),
-    
-    textInput(ns("url"), "url",
-              placeholder = NULL
-    ),
-    span('make sure the url is public and working'),
-    
-    if (failed)
-      div(tags$b("Invalid name file or url", style = "color: red;")),
-    
-    footer = tagList(
-      modalButton("Cancel"),
-      actionButton(ns("ok"), "OK")
+  
+  if(withoutlink){
+    modalDialog(
+      
+      textInput(ns("file"), "file name",
+                placeholder = 'e.g. metadata.csv'
+      ),
+      span('make sure the file name has the right extension'),
+      
+      if (failed)
+        div(tags$b("Invalid name file or url", style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton(ns("ok"), "OK")
+      )
     )
-  )
+  }else{
+    modalDialog(
+      
+      textInput(ns("file"), "file name",
+                placeholder = 'e.g. metadata.csv'
+      ),
+      span('make sure the file name has the right extension'),
+      
+      textInput(ns("url"), "url",
+                placeholder = NULL
+      ),
+      span('make sure the url is public and working'),
+      
+      if (failed)
+        div(tags$b("Invalid name file or url", style = "color: red;")),
+      
+      footer = tagList(
+        modalButton("Cancel"),
+        actionButton(ns("ok"), "OK")
+      )
+    )
+  }
 }
 
-addDownloadlinkServer <-function(id, values){
+addDownloadlinkServer <-function(id, values, withoutlink=F){
   moduleServer(
     id,
     function(input, output, session) {
@@ -171,18 +203,24 @@ addDownloadlinkServer <-function(id, values){
     
       # Show modal when button is clicked.
       observeEvent(input$show, {
-        showModal(dataModal(ns))
+        showModal(dataModal(ns, failed = FALSE, withoutlink))
       })
       
       observeEvent(input$ok, {
+        if(withoutlink){
+          url <- "link"
+        }else{
+          url <- input$url
+        }
+        
         # Check that data object exists and is data frame.
         if (!is.null(input$file) && nzchar(input$file) && input$file!="" &&
-            !is.null(input$url) && nzchar(input$url) && input$url!="") {
-          values[[ns("url")]] <- rbind(values[[ns("url")]], input$url)
+            !is.null(url) && nzchar(url) && url!="") {
+          values[[ns("url")]] <- rbind(values[[ns("url")]], url)
           values[[ns("data")]] <- rbind(values[[ns("data")]], input$file)
           removeModal()
         } else {
-          showModal(dataModal(ns, failed = TRUE))
+          showModal(dataModal(ns, failed = TRUE, withoutlink=withoutlink))
         }
       })
       
@@ -221,6 +259,7 @@ server <- function(input, output) {
                                                                     "/`, the RNA data in `./supp_rna/",input$alias,
                                                                     "/`, the HTO data in `./supp_hto/",input$alias,
                                                                     "/`, and the metadata in `./metadata/`"), width = "100%"),
+        addDownloadlink("Impossiblefiles", name="expected files"),
       shinyjs::enable("downloadData"))
     }else if(input$dataset=="geo"){
       tagList(
@@ -247,7 +286,7 @@ server <- function(input, output) {
       }else if(input$geodownload=="geo"){ 
         actionButton("geo_download_button", "load GEO")
       }else{
-        renderText({"wget option"})
+        actionButton("geo_download_button_2", "loading info")
       }
     }
   })
@@ -276,6 +315,26 @@ server <- function(input, output) {
       })
     }
   })
+  
+  # Select description and keyword from metadata
+  observeEvent(input$geo_download_button_2, {
+    shinyjs::disable("geodownload")
+    shinyjs::disable("dataset")
+    shinyjs::disable("alias")
+    shinyjs::disable("doi")
+    shinyjs::disable("id")
+    output$download_stepfour = renderUI({
+      tagList(
+        checkboxInput("include_hto2", "Include HTO data", value = FALSE),
+        p("One needs to explicitely check the HTO box if HTO data needs to be processed (ingnoring HTO information otherwise)."),
+        addDownloadlink("GEOproteindata", name="protein", mandatory=T),
+        addDownloadlink("GEOrnadata", name="RNA"),
+        addDownloadlink("GEOhtodata", name="HTO"),
+        actionButton("geodone2", "done", width = "30%")
+      )
+    })
+  })
+  
   
   # Filtering of Protein files for GEO database
   observeEvent(c(input$columns, input$keyword_protein), {
@@ -341,6 +400,7 @@ server <- function(input, output) {
       output$load_stepone = renderUI({
         tagList(
           h4("Load data"),
+          includeMarkdown("../docu/geo-load2.md"),
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
                       , selected = "na"),
@@ -387,8 +447,12 @@ server <- function(input, output) {
                    output$selected_var <- renderUI({includeMarkdown("../docu/entry-page.md")})
                  }else if(input$dataset=="impossible"){
                    output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
+                   addDownloadlinkServer("Impossiblefiles", values, withoutlink=T)
                  }else if(input$dataset=="geo"){
                    output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
+                   addDownloadlinkServer("GEOproteindata", values)
+                   addDownloadlinkServer("GEOrnadata", values)
+                   addDownloadlinkServer("GEOhtodata", values)
                    addDownloadlinkServer("GEOmetadata", values)
                  }else{
                    output$selected_var <- NULL

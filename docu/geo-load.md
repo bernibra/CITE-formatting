@@ -1,5 +1,5 @@
 ### Loading GEO data
 
-To understand how to load GEO data, one needs to know its format. To do so, you can download one of the files and figure it out for yourself. If there is only two files, it is not a bad idea to check both. 
+There are several parameters that matter when deciding how to process the data coming from GEOquery. It all depends on how files are organized. If protein, RNA and HTO data come all together under one `geo\_accession` key, one can define a keyword to identify the right file in each case. If different file types come under different `geo\_accession` keys, one has to sort this out in the previous step. 
 
-Similarly, if one only defines the format for the protein, the app will assume that the format for the RNA and HTO data is the same. One might one to consider if this is actually true by checking all the different data types. 
+If different data types are processed differently, one can specify this here by checking the corresponding box and specifying the processing of each file type accordingly.
