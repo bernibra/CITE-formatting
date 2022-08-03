@@ -11,9 +11,13 @@ labelMandatory <- function(label) {
 }
 
 get_pdata <- function(geo_id){
-  granja <- getGEO(geo_id)
+  granja <- tryCatch(getGEO(geo_id), error=function(cond) {NULL})
     # Get pData for each element and concatenate tables
-  return(purrr::map(granja, pData) %>% dplyr::bind_rows())
+  if(is.null(granja)){
+    return(NULL)
+  }else{
+    return(purrr::map(granja, pData) %>% dplyr::bind_rows())
+  }
 }
 
 regfilter <- function(x, y, z){
@@ -57,8 +61,8 @@ askextraclassServer <- function(id, class, typ){
           ns <- session$ns
           tagList(
             textInput(ns("features"),  placeholder = "pattern for features file", label = tags$span(style="font-weight: normal;","features")),
-            textInput(ns("cells"),  placeholder = "pattern for cell file", label = tags$span(style="font-weight: normal;","Seurat experiment key")),
-            textInput(ns("replace"),  placeholder = "pattern for matrix file", label = tags$span(style="font-weight: normal;","Seurat experiment key")),
+            textInput(ns("cells"),  placeholder = "pattern for cell file", label = tags$span(style="font-weight: normal;","cells")),
+            textInput(ns("replace"),  placeholder = "pattern for matrix file", label = tags$span(style="font-weight: normal;","matrix")),
             numericInput(ns("column"), label = tags$span(style="font-weight: normal;","column used in the features file"),   min = 1,value=1)
           )
         })
@@ -120,26 +124,86 @@ loaddataServer <- function(id, on=T, typ="protein"){
   )
 }
 #####
+#####
+addDownloadlink <-function(id, name){
+  ns <- NS(id)
+  tagList(
+    br(),
+    br(),
+    p(style="font-weight: bold;", paste(name, "files", sep=" ")),
+    actionButton(ns("show"), "add metadata"),
+    br(),
+    br(),
+    p("added files:"),    
+    verbatimTextOutput(ns("dataInfo"))
+    )
+}
+
+dataModal <- function(ns, failed = FALSE) {
+  # Popup for download links addition
+  modalDialog(
+    
+    textInput(ns("file"), "file name",
+              placeholder = 'e.g. metadata.csv'
+    ),
+    span('make sure the file name has the right extension'),
+    
+    textInput(ns("url"), "url",
+              placeholder = NULL
+    ),
+    span('make sure the url is public and working'),
+    
+    if (failed)
+      div(tags$b("Invalid name file or url", style = "color: red;")),
+    
+    footer = tagList(
+      modalButton("Cancel"),
+      actionButton(ns("ok"), "OK")
+    )
+  )
+}
+
+addDownloadlinkServer <-function(id, values){
+  moduleServer(
+    id,
+    function(input, output, session) {
+      ns <- session$ns
+    
+      # Show modal when button is clicked.
+      observeEvent(input$show, {
+        showModal(dataModal(ns))
+      })
+      
+      observeEvent(input$ok, {
+        # Check that data object exists and is data frame.
+        if (!is.null(input$file) && nzchar(input$file) && input$file!="" &&
+            !is.null(input$url) && nzchar(input$url) && input$url!="") {
+          values[[ns("url")]] <- rbind(values[[ns("url")]], input$url)
+          values[[ns("data")]] <- rbind(values[[ns("data")]], input$file)
+          removeModal()
+        } else {
+          showModal(dataModal(ns, failed = TRUE))
+        }
+      })
+      
+      # Display information about selected data
+      output$dataInfo <- renderPrint({
+        if (is.null(values[[ns("data")]]))
+          "No data selected"
+        else
+          values[[ns("data")]]
+      })
+    }
+  )
+}
+#####
+
 
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
   # Values to save across elements
   values<-reactiveValues()
-
-  # Basic bottom documentation
-  observeEvent(input$dataset,
-               {
-                 if (input$dataset=="na") {
-                   output$selected_var <- renderUI({includeMarkdown("../docu/entry-page.md")})
-                 }else if(input$dataset=="impossible"){
-                   output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
-                 }else if(input$dataset=="geo"){
-                   output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
-                 }else{
-                   output$selected_var <- NULL
-                 }
-               })
     
   # First reactive selection (what type of entry is it? GEO, ArrayExpress, direct download,...)
   output$download_steptwo = renderUI({
@@ -165,7 +229,8 @@ server <- function(input, output) {
               radioButtons('geodownload', 
                            label=labelMandatory("download type"),
                            choices = c("Nothing selected"="na",'download via GEOquery'="geo", "direct download"="wget"),
-                           selected = "na")
+                           selected = "na"),
+              addDownloadlink("GEOmetadata", name="metadata")
              )
     }else{
       tagList(selectInput('columns2', 'Columns', c("a", "b")),
@@ -179,7 +244,7 @@ server <- function(input, output) {
     
     if (!is.null(input$geodownload) & input$dataset!="na" & condition){
       if(input$geodownload=="na" | input$id==""){
-      }else if(input$geodownload=="geo"){
+      }else if(input$geodownload=="geo"){ 
         actionButton("geo_download_button", "load GEO")
       }else{
         renderText({"wget option"})
@@ -189,18 +254,27 @@ server <- function(input, output) {
 
   # Select description and keyword from metadata
   observeEvent(input$geo_download_button, {
+    shinyjs::disable("geodownload")
+    shinyjs::disable("dataset")
+    shinyjs::disable("alias")
+    shinyjs::disable("doi")
     values$pdata <- get_pdata(input$id)
-    output$download_stepfour = renderUI({
-      tagList(
-        selectInput("columns", labelMandatory("select column"), c("Not selected"="na", colnames(values$pdata)), selected = "na"),
-        p("To filter out the different files, we need to select a column of the GEO metadata."),
-        checkboxInput("include_hto", "Include HTO data", value = TRUE),
-        textInput("keyword_protein", placeholder = "regex for ADT files", label = NULL),
-        textInput("keyword_rna", placeholder = "regex for RNA files", label = NULL),
-        textInput("keyword_hto", placeholder = "regex for HTO files", label = NULL),
-        actionButton("geodone", "done", width = "30%")
-      )
-    })
+    if(is.null(values$pdata)){
+      output$download_stepfour = renderUI({p(style="color: red;", "The GEO id can't be found")})
+    }else{
+      shinyjs::disable("id")
+      output$download_stepfour = renderUI({
+        tagList(
+          selectInput("columns", labelMandatory("select column"), c("Not selected"="na", colnames(values$pdata)), selected = "na"),
+          p("To filter out the different files, we need to select a column of the GEO metadata."),
+          checkboxInput("include_hto", "Include HTO data", value = TRUE),
+          textInput("keyword_protein", placeholder = "regex for ADT files", label = NULL),
+          textInput("keyword_rna", placeholder = "regex for RNA files", label = NULL),
+          textInput("keyword_hto", placeholder = "regex for HTO files", label = NULL),
+          actionButton("geodone", "done", width = "30%")
+        )
+      })
+    }
   })
   
   # Filtering of Protein files for GEO database
@@ -270,9 +344,7 @@ server <- function(input, output) {
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
                       , selected = "na"),
-          actionButton("geodownloadone", "download example", width = "40%"),
-          br(),
-          br()
+          actionButton("geodownloadone", "download example", width = "40%")
         )
       })
       output$load_steptwo = renderUI({
@@ -308,12 +380,20 @@ server <- function(input, output) {
     askextraclassServer('load_hto-extra_class', class=input[["load_hto-class"]], typ="hto")
   })
   
-  
-  observeEvent(input$geodownloadone, {
-    data <- values$pdata %>% pull(input$columns) 
-    geoaccess <- values$pdata %>% pull(geo_accession)
-    GEOquery::getGEOSuppFiles(geoaccess[data==input$download_one_file][1], baseDir = "../data/") 
-  })
+  # Basic bottom documentation
+  observeEvent(input$dataset,
+               {
+                 if (input$dataset=="na") {
+                   output$selected_var <- renderUI({includeMarkdown("../docu/entry-page.md")})
+                 }else if(input$dataset=="impossible"){
+                   output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
+                 }else if(input$dataset=="geo"){
+                   output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
+                   addDownloadlinkServer("GEOmetadata", values)
+                 }else{
+                   output$selected_var <- NULL
+                 }
+               })
   
   output$downloadData <- downloadHandler(
     filename = function() {

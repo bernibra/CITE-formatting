@@ -84,7 +84,6 @@ ui <- fluidPage(
       h4("Metadata"),
       fluidRow(
         column(6,
-        
           textInput("doi", labelMandatory("doi of the experiment"), placeholder = "doi.org/10.1038/s41591-021-01329-2"),
           textInput("alias", labelMandatory("a unique alias"), placeholder ="Stephenson2021"),
           radioButtons('dataset', 
@@ -101,20 +100,22 @@ ui <- fluidPage(
       ),
       hr()
     ),
+  ),
+  fluidRow(
     column(12,
       fluidRow(
         column(6,
           uiOutput('download_steptwo')
         ),
         column(6,
-          fluidRow(
-            br(),
-            uiOutput('download_stepthree'),
-            uiOutput('download_stepfour')
-          )
+          br(),
+          uiOutput('download_stepthree'),
+          uiOutput('download_stepfour')
         ),
       )
     ),
+  ),
+  fluidRow(
     column(12,
            fluidRow(
              uiOutput("load_line"),
@@ -126,6 +127,8 @@ ui <- fluidPage(
              ),
            )
     ),
+  ),
+  fluidRow(
     column(12, 
       uiOutput("selected_var"),
       uiOutput("main"),
