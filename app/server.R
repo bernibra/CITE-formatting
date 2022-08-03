@@ -130,7 +130,6 @@ addDownloadlink <-function(id, name, mandatory=FALSE){
   if(mandatory){
     tagList(
       br(),
-      br(),
       p(style="font-weight: bold;", labelMandatory(paste(name, "files", sep=" "))),
       actionButton(ns("show"), "add data"),
       br(),
@@ -140,7 +139,6 @@ addDownloadlink <-function(id, name, mandatory=FALSE){
     )
   }else{
     tagList(
-      br(),
       br(),
       p(style="font-weight: bold;", paste(name, "files", sep=" ")),
       actionButton(ns("show"), "add data"),
@@ -259,6 +257,7 @@ server <- function(input, output) {
                                                                     "/`, the RNA data in `./supp_rna/",input$alias,
                                                                     "/`, the HTO data in `./supp_hto/",input$alias,
                                                                     "/`, and the metadata in `./metadata/`"), width = "100%"),
+        br(),
         addDownloadlink("Impossiblefiles", name="expected files"),
       shinyjs::enable("downloadData"))
     }else if(input$dataset=="geo"){
@@ -269,6 +268,7 @@ server <- function(input, output) {
                            label=labelMandatory("download type"),
                            choices = c("Nothing selected"="na",'download via GEOquery'="geo", "direct download"="wget"),
                            selected = "na"),
+              br(),
               addDownloadlink("GEOmetadata", name="metadata")
              )
     }else{
@@ -325,12 +325,13 @@ server <- function(input, output) {
     shinyjs::disable("id")
     output$download_stepfour = renderUI({
       tagList(
-        checkboxInput("include_hto2", "Include HTO data", value = FALSE),
+        checkboxInput("include_hto", "Include HTO data", value = FALSE),
         p("One needs to explicitely check the HTO box if HTO data needs to be processed (ingnoring HTO information otherwise)."),
         addDownloadlink("GEOproteindata", name="protein", mandatory=T),
         addDownloadlink("GEOrnadata", name="RNA"),
         addDownloadlink("GEOhtodata", name="HTO"),
-        actionButton("geodone2", "done", width = "30%")
+        br(),
+        actionButton("geodone", "done", width = "30%")
       )
     })
   })
@@ -368,7 +369,8 @@ server <- function(input, output) {
   
   # Filtering of hto files for GEO database  
   observeEvent(c(input$columns, input$keyword_hto, input$include_hto), {
-    if (input$columns!="na" & input$include_hto) {
+    condition <- ifelse(is.null(input$columns), "na", input$columns)
+    if (condition!="na" & input$include_hto) {
       output$selected_var <- NULL
       output$load_stepone <- NULL
       output$load_line <- NULL
@@ -376,7 +378,7 @@ server <- function(input, output) {
       output$tablegeo_hto <- renderTable({
         values$pdata %>% select(input$columns) %>% dplyr::rename_with(function(x) "HTO data") %>%  filter_at(1, all_vars(grepl(input$keyword_hto, .)))
       })
-    }else if(input$columns!="na" & !input$include_hto){
+    }else if(condition!="na" & !input$include_hto){
       output$selected_var <- NULL
       output$tablegeo_hto <- NULL
       output$load_line <- NULL
@@ -394,9 +396,12 @@ server <- function(input, output) {
     output$tablegeo_rna <- NULL
     output$load_line <- NULL
     output$tablegeo_hto <- NULL
-    output$selected_var <- renderUI({includeMarkdown("../docu/geo-load.md")})
-    if(input$columns!="na"){
-      output$load_line = renderUI(hr())
+    shinyjs::disable("download_stepthree")
+    shinyjs::disable("download_stepfour")
+    condition <- ifelse(is.null(input$columns), "na", input$columns)
+    output$load_line = renderUI(hr())
+    if(condition!="na"){
+      output$selected_var <- renderUI({includeMarkdown("../docu/geo-load.md")})
       output$load_stepone = renderUI({
         tagList(
           h4("Load data"),
@@ -412,11 +417,42 @@ server <- function(input, output) {
           checkboxInput("separate_protocols", "separate protocols for ADT and RNA data", value = FALSE),
           loaddata("load_protein"),
           loaddata("load_rna"),
-          loaddata("load_hto")
+          loaddata("load_hto"),
+          actionButton("sampleinformation", "sample info", width = "40%")
+        )
+      })
+    }else{
+      output$load_stepone = renderUI({
+        tagList(
+          h4("Load data"),
+          includeMarkdown("../docu/geo-load-3.md"),
+          output$selected_var <- NULL
+        )
+      })
+      output$load_steptwo = renderUI({
+        tagList(
+          checkboxInput("separate_protocols", "separate protocols for ADT and RNA data", value = FALSE),
+          loaddata("load_protein"),
+          loaddata("load_rna"),
+          loaddata("load_hto"),
+          actionButton("sampleinformation", "sample info", width = "40%")
         )
       })
     }
   })
+  
+  observeEvent(input$sampleinformation, {
+     shinyjs::disable("load_steptwo")
+     output$load_stepone = renderUI({
+        tagList(
+          h4("Sample information"),
+          includeMarkdown("../docu/sample-information.md"),
+          textInput("sampleid", placeholder = "Sample id", label = NULL),
+          includeMarkdown("../docu/sample-information-2.md")
+        )
+      })
+  })
+  
   
   observeEvent(input$separate_protocols, {
     if(input$separate_protocols & input$include_hto){
