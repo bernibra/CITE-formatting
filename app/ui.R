@@ -1,6 +1,7 @@
 library(shiny)
 library(shinyjs)
-library(DT)
+library(shinyalert)
+# library(DT)
 
 labelMandatory <- function(label) {
   tagList(
@@ -21,7 +22,7 @@ tabTable <- function(id) {
 appCSS <-
   "
    html{
-       background-color: #f2f2f2;
+       background-color: #bdbdbd;
    }
    .mandatory_star { 
        color: red;
@@ -36,19 +37,19 @@ appCSS <-
        color: red;
        }
    body {
-       background: #f2f2f2;
+       background: #bdbdbd;
        }
    #header {
-       background: #fff;
+       background: #f0f0f0;
        border-bottom: 1px solid #ddd;
        padding: 15px 15px 10px;
        }
    .loaddata {
-       margin: 5px 1px 5px 1px;
-       background: #f0f0f0;
-       border-bottom: 0.5px solid #d9d9d9;
-       padding: 15px 15px 10px;
-       font-size: 90%;
+       margin: 1px 1px 5px 1px;
+       background: #ffffff;
+       border: 0.5px solid #d9d9d9;
+       padding: 10px 10px 5px;
+       font-size: 100%;
        }
    .loaddata h4 {
        font-size: 100%;
@@ -71,14 +72,15 @@ appCSS <-
        width: 80%;
        border-radius: 5px;
        border: 1px;
-       background-color: white;
+       background-color: #f0f0f0;
        position: relative;
-       box-shadow: 2px 2px 2px lightgrey;
+       box-shadow: 2px 2px 2px #737373;
        margin-top: 30px;
        padding-left: 30px;
        padding-right: 30px;
        padding-top: 5px;
        padding-bottom: 5px;
+       margin-bottom: 20px;
     }
 "
 
@@ -168,7 +170,6 @@ ui <- fluidPage(
         uiOutput("selected_var"),
         uiOutput("main"),
         br(),
-        hr(),
         br(),
         fluidRow(
           column(4, 

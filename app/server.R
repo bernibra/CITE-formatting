@@ -3,6 +3,8 @@ library(GEOquery)
 library(markdown)
 library(dplyr)
 
+jsResetCode <- "shinyjs.reset = function() {history.go(0)}" # Define the js method that resets the page
+
 labelMandatory <- function(label) {
   tagList(
     label,
@@ -128,24 +130,24 @@ loaddataServer <- function(id, on=T, typ="protein"){
 addDownloadlink <-function(id, name, mandatory=FALSE){
   ns <- NS(id)
   if(mandatory){
-    tagList(
+    tagList(div(class="loaddata",
       br(),
       p(style="font-weight: bold;", labelMandatory(paste(name, "files", sep=" "))),
       actionButton(ns("show"), "add data"),
       br(),
       br(),
       p("added files:"),    
-      verbatimTextOutput(ns("dataInfo"))
+      verbatimTextOutput(ns("dataInfo")))
     )
   }else{
-    tagList(
+    tagList(div(class="loaddata",
       br(),
       p(style="font-weight: bold;", paste(name, "files", sep=" ")),
       actionButton(ns("show"), "add data"),
       br(),
       br(),
       p("added files:"),    
-      verbatimTextOutput(ns("dataInfo"))
+      verbatimTextOutput(ns("dataInfo")))
     )
   }
 }
@@ -277,23 +279,36 @@ server <- function(input, output, session) {
         br(),
         addDownloadlink("GEOmetadata", name="metadata"))
     }else{
-      tagList(selectInput('columns2', 'Columns', c("a", "b")))
+      tagList(
+        h4("Download data"),
+        textInput("id", labelMandatory("ArrayExpress id"), placeholder = "e.g. MTAB-9357"),
+        radioButtons('arraydownload', 
+                     label=labelMandatory("download type"),
+                     choices = c("Nothing selected"="na",'download via ArrayExpress'="array", "direct download"="wget"),
+                     selected = "na"),
+        br(),
+        addDownloadlink("GEOmetadata", name="metadata")
+      )
     }
   })
 
   # GEO Load metadata
   output$download_stepthree = renderUI({
+    arraydownload <- ifelse(is.null(input$arraydownload), "other", input$arraydownload)
     geodownload <- ifelse(is.null(input$geodownload), "other", input$geodownload)
+    
     id <- ifelse(is.null(input$id), "", input$id)
-    condition <- input$doi!="" & input$alias!="" & input$dataset!="na" & id!=""
+    condition <- input$doi!="" & input$alias!="" & input$dataset!="na" & id!="" & geodownload!="na" & arraydownload!="na"
     
     if (condition){
-        if(geodownload=="other" | geodownload=="wget"){
+        if(geodownload!="geo" & arraydownload!="array"){
           actionButton("geo_download_button_2", "loading info")
         }else if(geodownload=="geo"){ 
           actionButton("geo_download_button", "load GEO")
+        }else if(arraydownload=="array"){ 
+          actionButton("geo_download_button_3", "loading info")
         }else{
-          
+          NULL
         }
     }
   })
@@ -317,7 +332,7 @@ server <- function(input, output, session) {
           textInput("keyword_protein", placeholder = "regex for ADT files", label = NULL),
           textInput("keyword_rna", placeholder = "regex for RNA files", label = NULL),
           textInput("keyword_hto", placeholder = "regex for HTO files", label = NULL),
-          actionButton("geodone", "done", width = "30%")
+          actionButton("geodone", "done")
         )
       })
     }
@@ -338,11 +353,31 @@ server <- function(input, output, session) {
         addDownloadlink("GEOrnadata", name="RNA"),
         addDownloadlink("GEOhtodata", name="HTO"),
         br(),
-        actionButton("geodone", "done", width = "30%")
-      )
+        actionButton("geodone", "done")
+        )
     })
   })
   
+  
+  # Select description and keyword from metadata
+  observeEvent(input$geo_download_button_3, {
+    shinyjs::disable("geodownload")
+    shinyjs::disable("dataset")
+    shinyjs::disable("alias")
+    shinyjs::disable("doi")
+    shinyjs::disable("id")
+    output$download_stepfour = renderUI({
+      tagList(
+        checkboxInput("include_hto", "Include HTO data", value = TRUE),
+        p("ArrayExpress will download all files associated to a dataset. To filter out these files, we need to use regexp to decide which ones to keep."),
+        textInput("keyword_protein_array", placeholder = "regex for ADT files", label = NULL),
+        textInput("keyword_rna_array", placeholder = "regex for RNA files", label = NULL),
+        textInput("keyword_hto_array", placeholder = "regex for HTO files", label = NULL),
+        actionButton("geodone", "done")
+      )
+    })
+  
+  })
   
   # Filtering of Protein files for GEO database
   observeEvent(c(input$columns, input$keyword_protein), {
@@ -399,15 +434,20 @@ server <- function(input, output, session) {
   
   # Button to signal the end of data selection in GEO
   observeEvent(input$geodone, {
+    arraydownload <- ifelse(is.null(input$arraydownload), "other", input$arraydownload)
+    geodownload <- ifelse(is.null(input$geodownload), "other", input$geodownload)
+    output$Nothinguploaded <- NULL
     output$tablegeo_protein <- NULL
     output$tablegeo_rna <- NULL
     output$load_line <- NULL
     output$tablegeo_hto <- NULL
-    shinyjs::disable("download_stepthree")
-    shinyjs::disable("download_stepfour")
     condition <- ifelse(is.null(input$columns), "na", input$columns)
-    output$load_line = renderUI(hr())
-    if(condition!="na"){
+    if(geodownload!="geo" & arraydownload!="array" & is.null(values[["GEOproteindata-data"]])){
+      shinyalert("Oops!", "You forgot to upload a file...", type = "error")
+    }else if(condition!="na"){
+      output$load_line = renderUI(hr())
+      shinyjs::disable("download_stepthree")
+      shinyjs::disable("download_stepfour")
       output$selected_var <- renderUI({includeMarkdown("../docu/geo-load.md")})
       output$load_stepone = renderUI({
         tagList(
@@ -416,7 +456,7 @@ server <- function(input, output, session) {
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
                       , selected = "na"),
-          actionButton("geodownloadone", "download example", width = "60%")
+          actionButton("geodownloadone", "download example")
         )
       })
       output$load_steptwo = renderUI({
@@ -425,10 +465,14 @@ server <- function(input, output, session) {
           loaddata("load_protein"),
           loaddata("load_rna"),
           loaddata("load_hto"),
-          actionButton("sampleinformation", "sample info", width = "40%")
+          br(),
+          actionButton("sampleinformation", "sample info")
         )
       })
     }else{
+      shinyjs::disable("download_stepthree")
+      shinyjs::disable("download_stepfour")
+      output$load_line = renderUI(hr())
       output$load_stepone = renderUI({
         tagList(
           h4("Load data"),
@@ -442,7 +486,8 @@ server <- function(input, output, session) {
           loaddata("load_protein"),
           loaddata("load_rna"),
           loaddata("load_hto"),
-          actionButton("sampleinformation", "sample info", width = "40%")
+          br(),
+          actionButton("sampleinformation", "sample info")
         )
       })
     }
@@ -485,7 +530,15 @@ server <- function(input, output, session) {
                                  "if samples are separated by file, but there are different types of files (different tissues or experiments) that need to be separately considered, one can define groups of files that will be considered separately."="sample_group"),
                      selected = "na"),
         uiOutput("additional_samples"),
-        downloadButton('downloadData', 'Download')
+        fluidRow(
+          column(6,
+                 br(),
+                  downloadButton('downloadData', 'Download', width = "60%")
+          ),
+          # column(6,
+          #         actionButton("reset_button", "Reset", width = "60%")
+          # ),
+        )
       )
     })
   })
@@ -551,8 +604,18 @@ server <- function(input, output, session) {
                    addDownloadlinkServer("GEOrnadata", values)
                    addDownloadlinkServer("GEOhtodata", values)
                    addDownloadlinkServer("GEOmetadata", values)
+                 }else if(input$dataset=="wget"){
+                   output$selected_var <- renderUI({includeMarkdown("../docu/wget-download.md")})
+                   addDownloadlinkServer("GEOproteindata", values)
+                   addDownloadlinkServer("GEOrnadata", values)
+                   addDownloadlinkServer("GEOhtodata", values)
+                   addDownloadlinkServer("GEOmetadata", values)
                  }else{
-                   output$selected_var <- NULL
+                   output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
+                   addDownloadlinkServer("GEOproteindata", values)
+                   addDownloadlinkServer("GEOrnadata", values)
+                   addDownloadlinkServer("GEOhtodata", values)
+                   addDownloadlinkServer("GEOmetadata", values)
                  }
                })
   
@@ -574,5 +637,11 @@ server <- function(input, output, session) {
       yaml::write_yaml(data, con)
     }
   )
-    
+  
+  session$onSessionEnded(function() {
+    stopApp()
+  })
+  # observeEvent(input$reset_button, {
+  #   session$reload()
+  #   })
 }
