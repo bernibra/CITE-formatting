@@ -1,0 +1,3 @@
+There are several parameters that matter when deciding how to process the data coming from direct downloads. It all depends on how files are organized. If protein, RNA and HTO data come all together under one link, one can define a keyword to identify the right file in each case (this will happen if the data was compressed as a tar file and one can only dowload everything together). If different file types come under different links, one can ignore the keyword argument. 
+
+If different data types are processed differently, one can specify this here by checking the corresponding box and specifying the protocol for each file type accordingly. Otherwise, all files corresponding to different data types will be processed in the same manner.
