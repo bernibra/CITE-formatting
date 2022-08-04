@@ -131,7 +131,6 @@ addDownloadlink <-function(id, name, mandatory=FALSE){
   ns <- NS(id)
   if(mandatory){
     tagList(div(class="loaddata",
-      br(),
       p(style="font-weight: bold;", labelMandatory(paste(name, "files", sep=" "))),
       actionButton(ns("show"), "add data"),
       br(),
@@ -141,7 +140,6 @@ addDownloadlink <-function(id, name, mandatory=FALSE){
     )
   }else{
     tagList(div(class="loaddata",
-      br(),
       p(style="font-weight: bold;", paste(name, "files", sep=" ")),
       actionButton(ns("show"), "add data"),
       br(),
@@ -629,11 +627,11 @@ server <- function(input, output, session) {
                                  id = input$id),
                    load=list(separate_samples=input$separate_samples),
                    metadata=list(doi=input$doi,
-                                 description=input$description,
-                                 tissue=input$tissue,
-                                 species=input$species,
+                                 description=ifelse(input$description=="",NULL, input$description),
+                                 tissue=ifelse(input$tissue=="",NULL, input$tissue),
+                                 species=ifelse(input$species=="",NULL, input$species),
                                  alias=input$alias,
-                                 genome_build=input$genome_build))
+                                 genome_build=ifelse(input$genome_build=="",NULL, input$genome_build)))
       yaml::write_yaml(data, con)
     }
   )

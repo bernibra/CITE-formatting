@@ -45,7 +45,7 @@ appCSS <-
        padding: 15px 15px 10px;
        }
    .loaddata {
-       margin: 1px 1px 5px 1px;
+       margin: 0px 0px 5px 0px;
        background: #ffffff;
        border: 0.5px solid #d9d9d9;
        padding: 10px 10px 5px;
