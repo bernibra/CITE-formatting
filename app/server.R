@@ -236,7 +236,7 @@ addDownloadlinkServer <-function(id, values, withoutlink=F){
 
 
 # Define server logic required to draw a histogram ----
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   # Values to save across elements
   values<-reactiveValues()
@@ -252,6 +252,7 @@ server <- function(input, output) {
     }else if(input$dataset=="impossible"){
       tagList(
         h4("Download"),
+        textInput("id", labelMandatory("GEO id"), placeholder = "e.g. Buus2021"),
         textInput("source", "data source (url link)"),
         textAreaInput("comment", "comment on how to download", paste0("... and store the adt data in `./supp_protein/",input$alias,
                                                                     "/`, the RNA data in `./supp_rna/",input$alias,
@@ -263,7 +264,7 @@ server <- function(input, output) {
     }else if(input$dataset=="geo"){
       tagList(
               h4("Download data"),
-              textInput("id", labelMandatory("GEO id"), placeholder = "e.g. GSE139369"),
+              textInput("id", labelMandatory("unique id"), placeholder = "e.g. GSE139369"),
               radioButtons('geodownload', 
                            label=labelMandatory("download type"),
                            choices = c("Nothing selected"="na",'download via GEOquery'="geo", "direct download"="wget"),
@@ -279,15 +280,18 @@ server <- function(input, output) {
 
   # GEO Load metadata
   output$download_stepthree = renderUI({
-    condition <- input$doi!="" & input$alias!=""
+    geodownload <- ifelse(is.null(input$geodownload), "other", input$geodownload)
+    id <- ifelse(is.null(input$id), "", input$id)
+    condition <- input$doi!="" & input$alias!="" & input$dataset!="na" & id!=""
     
-    if (!is.null(input$geodownload) & input$dataset!="na" & condition){
-      if(input$geodownload=="na" | input$id==""){
-      }else if(input$geodownload=="geo"){ 
-        actionButton("geo_download_button", "load GEO")
-      }else{
-        actionButton("geo_download_button_2", "loading info")
-      }
+    if (condition){
+        if(geodownload=="other" | geodownload=="wget"){
+          actionButton("geo_download_button_2", "loading info")
+        }else if(geodownload=="geo"){ 
+          actionButton("geo_download_button", "load GEO")
+        }else{
+          
+        }
     }
   })
 
@@ -409,7 +413,7 @@ server <- function(input, output) {
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
                       , selected = "na"),
-          actionButton("geodownloadone", "download example", width = "40%")
+          actionButton("geodownloadone", "download example", width = "60%")
         )
       })
       output$load_steptwo = renderUI({
@@ -441,19 +445,6 @@ server <- function(input, output) {
     }
   })
   
-  observeEvent(input$sampleinformation, {
-     shinyjs::disable("load_steptwo")
-     output$load_stepone = renderUI({
-        tagList(
-          h4("Sample information"),
-          includeMarkdown("../docu/sample-information.md"),
-          textInput("sampleid", placeholder = "Sample id", label = NULL),
-          includeMarkdown("../docu/sample-information-2.md")
-        )
-      })
-  })
-  
-  
   observeEvent(input$separate_protocols, {
     if(input$separate_protocols & input$include_hto){
       loaddataServer("load_protein", on=T, typ="protein")
@@ -476,6 +467,70 @@ server <- function(input, output) {
     askextraclassServer('load_hto-extra_class', class=input[["load_hto-class"]], typ="hto")
   })
   
+  # Load sample information
+  observeEvent(input$sampleinformation, {
+    shinyjs::disable("load_steptwo")
+    output$load_stepone = renderUI({
+      tagList(
+        h4("Sample information"),
+        radioButtons('sampleoption', 
+                     label=tags$span(style="font-weight: normal;","Adding sample information can be done in different ways:"),
+                     choices = c("No sample information"="na",
+                                 'if the sample information is already one of the columns, set as colData (see on the left), one can simply define the column name.'="sampleid",
+                                 "if the sample information is found in an extermal file, this needs to have been first uploaded as metadata. If this is the case, the pipeline will assume that there are one or more columns that define the sample id.
+"="extfile",
+                                 "if samples are separated by file, but there are different types of files (different tissues or experiments) that need to be separately considered, one can define groups of files that will be considered separately."="sample_group"),
+                     selected = "na"),
+        uiOutput("additional_samples"),
+        downloadButton('downloadData', 'Download')
+      )
+    })
+  })
+  
+  observeEvent(input$sampleoption,{
+    if(input$sampleoption=="na"){
+      shinyjs::enable("downloadData")
+      output$additional_samples <- NULL
+    }else if(input$sampleoption=="sampleid"){
+      output$additional_samples <- renderUI({
+        textInput("sampleid", label=labelMandatory(tags$span(style="font-weight: normal;","column name")), placeholder = "column in colData")
+      })
+      shinyjs::disable("downloadData")
+    }else if(input$sampleoption=="extfile"){
+      output$additional_samples <- renderUI({
+        tagList(
+          textInput("samplefile", label=labelMandatory(tags$span(style="font-weight: normal;","regex for file in metadata"))),
+          textInput("samplekey", label=tags$span(style="font-weight: normal;","column indicating the cell name"), placeholder = "row names as default"),
+          textInput("samplevalue", label=labelMandatory(tags$span(style="font-weight: normal;","column/s indicating the sample id")), placeholder = "if multiple, separated by ;")
+        )
+      })
+      shinyjs::disable("downloadData")
+    }else{
+      output$additional_samples <- renderUI({
+        textInput("samplegroups", label=labelMandatory(tags$span(style="font-weight: normal;","regex for file groups")), placeholder = "separated by ;")
+      })
+      shinyjs::disable("downloadData")
+    }
+  })
+  
+
+  # enable dowload button
+  observeEvent(c(input$sampleid, input$samplefile, input$samplevalue, input$samplegroups),{
+    sampleid <- ifelse(is.null(input$sampleid), "", input$sampleid)
+    samplefile <- ifelse(is.null(input$samplefile), "", input$samplefile)
+    samplevalue <- ifelse(is.null(input$samplevalue), "", input$samplevalue)
+    samplegroups <- ifelse(is.null(input$samplegroups), "", input$samplegroups)
+    if(input$sampleoption=="sampleid" & sampleid!=""){
+      shinyjs::enable("downloadData")
+    }
+    if(input$sampleoption=="extfile" & samplefile!="" & samplevalue!=""){
+      shinyjs::enable("downloadData")
+    }
+    if(input$sampleoption=="sample_group" & samplegroups!=""){
+      shinyjs::enable("downloadData")
+    }
+  })
+  
   # Basic bottom documentation
   observeEvent(input$dataset,
                {
@@ -484,6 +539,9 @@ server <- function(input, output) {
                  }else if(input$dataset=="impossible"){
                    output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
                    addDownloadlinkServer("Impossiblefiles", values, withoutlink=T)
+                   addDownloadlinkServer("GEOproteindata", values)
+                   addDownloadlinkServer("GEOrnadata", values)
+                   addDownloadlinkServer("GEOhtodata", values)
                  }else if(input$dataset=="geo"){
                    output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
                    addDownloadlinkServer("GEOproteindata", values)
