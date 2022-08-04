@@ -247,24 +247,22 @@ server <- function(input, output, session) {
     
     condition <- input$doi!="" & input$alias!=""
     if(!condition | input$dataset=="na"){
-      shinyjs::disable("downloadData")
-      
+
     }else if(input$dataset=="impossible"){
       tagList(
         h4("Download"),
-        textInput("id", labelMandatory("GEO id"), placeholder = "e.g. Buus2021"),
+        textInput("id", labelMandatory("unique id"), placeholder = "e.g. Buus2021"),
         textInput("source", "data source (url link)"),
         textAreaInput("comment", "comment on how to download", paste0("... and store the adt data in `./supp_protein/",input$alias,
                                                                     "/`, the RNA data in `./supp_rna/",input$alias,
                                                                     "/`, the HTO data in `./supp_hto/",input$alias,
                                                                     "/`, and the metadata in `./metadata/`"), width = "100%"),
         br(),
-        addDownloadlink("Impossiblefiles", name="expected files"),
-      shinyjs::enable("downloadData"))
+        addDownloadlink("Impossiblefiles", name="expected files"))
     }else if(input$dataset=="geo"){
       tagList(
               h4("Download data"),
-              textInput("id", labelMandatory("unique id"), placeholder = "e.g. GSE139369"),
+              textInput("id", labelMandatory("GEO id"), placeholder = "e.g. GSE139369"),
               radioButtons('geodownload', 
                            label=labelMandatory("download type"),
                            choices = c("Nothing selected"="na",'download via GEOquery'="geo", "direct download"="wget"),
@@ -272,9 +270,14 @@ server <- function(input, output, session) {
               br(),
               addDownloadlink("GEOmetadata", name="metadata")
              )
+    }else if(input$dataset=="wget"){
+      tagList(
+        h4("Download"),
+        textInput("id", labelMandatory("unique id"), placeholder = "e.g. Buus2021"),
+        br(),
+        addDownloadlink("GEOmetadata", name="metadata"))
     }else{
-      tagList(selectInput('columns2', 'Columns', c("a", "b")),
-      shinyjs::enable("downloadData"))
+      tagList(selectInput('columns2', 'Columns', c("a", "b")))
     }
   })
 
