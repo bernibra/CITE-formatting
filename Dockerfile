@@ -12,9 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssh2-1-dev \
     && rm -rf /var/lib/apt/lists/*
 
-RUN install.r shiny
-
-RUN R -e "install.packages(c('shinyalert', 'bslib', 'dplyr', 'purrr', 'stringr', 'markdown', 'BiocManager', 'datasets', 'shinyjs'), repos = c(CRAN = 'https://mran.revolutionanalytics.com/snapshot/2022-08-01'))"
+RUN install.r shiny shinyalert bslib dplyr purrr stringr markdown BiocManager shinyjs 
 
 RUN R -e "BiocManager::install(c('GEOquery', 'ArrayExpress'), version = BiocManager::version())"
 
