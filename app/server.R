@@ -35,7 +35,7 @@ is.all.empty <- function(a){
 }
 
 makelist <- function(input){
-  if(!is.null(input$keyword_protein)==1){
+  if(!is.null(input$keyword_protein)){
     keyword_protein <- tolower(input$keyword_protein)
     if(input$include_hto){
       keyword_rna <- ifelse(is.null(input$keyword_rna), "", tolower(input$keyword_rna))
@@ -69,24 +69,24 @@ makelist_2 <- function(input, type){
       separate_samples = input[[paste0("load_",type,"-separate_samples")]],
       keyword = ifelse_(input[[paste0("load_",type,"-keywords_load")]], NULL, input[[paste0("load_",type,"-keywords_load")]]),
       class = ifelse_(input[[paste0("load_",type,"-class")]], NULL,  input[[paste0("load_",type,"-class")]]),
-      h5key = ifelse_(input[[paste0("load_",type,"-h5key")]],  NULL, input[[paste0("load_",type,"-h5key")]]),
-      altexp = ifelse_(input[[paste0("load_",type,"-altexp")]], NULL,  input[[paste0("load_",type,"-altexp")]]),
-      access = ifelse_(input[[paste0("load_",type,"-access")]], NULL,  input[[paste0("load_",type,"-access")]]),
-      drop = ifelse_(input[[paste0("load_",type,"-drop")]], NULL,  input[[paste0("load_",type,"-drop")]]),
-      keep = ifelse_(input[[paste0("load_",type,"-keep")]], NULL,  input[[paste0("load_",type,"-keep")]]),
+      h5key = ifelse_(input[[paste0("load_",type,"-extra_class-h5key")]],  NULL, input[[paste0("load_",type,"-extra_class-h5key")]]),
+      altexp = ifelse_(input[[paste0("load_",type,"-extra_class-altexp")]], NULL,  input[[paste0("load_",type,"-extra_class-altexp")]]),
+      access = ifelse_(input[[paste0("load_",type,"-extra_class-access")]], NULL,  input[[paste0("load_",type,"-extra_class-access")]]),
+      drop = ifelse_(input[[paste0("load_",type,"-extra_class-drop")]], NULL,  input[[paste0("load_",type,"-extra_class-drop")]]),
+      keep = ifelse_(input[[paste0("load_",type,"-extra_class-keep")]], NULL,  input[[paste0("load_",type,"-extra_class-keep")]]),
       coldata = ifelse_(input[[paste0("load_",type,"-coldata")]], NULL,
                         stringr::str_trim(strsplit(x = input[[paste0("load_",type,"-coldata")]], split = ";")[[1]])),
-      cells = ifelse_(input[[paste0("load_",type,"-cells")]], NULL,  input[[paste0("load_",type,"-cells")]]),
-      replace = ifelse_(input[[paste0("load_",type,"-replace")]], NULL,  input[[paste0("load_",type,"-replace")]]),
-      features = ifelse_(input[[paste0("load_",type,"-features")]], NULL,  input[[paste0("load_",type,"-features")]]),
+      cells = ifelse_(input[[paste0("load_",type,"-extra_class-cells")]], NULL,  input[[paste0("load_",type,"-extra_class-cells")]]),
+      replace = ifelse_(input[[paste0("load_",type,"-extra_class-replace")]], NULL,  input[[paste0("load_",type,"-extra_class-replace")]]),
+      features = ifelse_(input[[paste0("load_",type,"-extra_class-features")]], NULL,  input[[paste0("load_",type,"-extra_class-features")]]),
       column = input[[paste0("load_",type,"-column")]],
       sample_groups = ifelse_(input$samplegroups, NULL,
                               stringr::str_trim(strsplit(x = input$samplegroups, split = ";")[[1]])),
       samples = ifelse__(input$sampleoption=="na", NULL,
-                         ifelse(is.null(input$samplefile),  input$sampleid,
+                         ifelse__(is.null(input$samplefile),  input$sampleid,
                                 list(file=input$samplefile,
                                      key=input$samplekey,
-                                     value=stringr::str_trim(strsplit(x = input$samplevalue, split = ";")))))
+                                     value=stringr::str_trim(strsplit(x = input$samplevalue, split = ";")[[1]]))))
     ))
 }
 
@@ -109,6 +109,68 @@ makelist_3 <- function(input){
   }
 }
 
+makelist_4 <- function(values, input, type="data"){
+  if(!is.null(values[[paste0("GEOproteindata-",type)]])){
+    protein <- values[[paste0("GEOproteindata-",type)]]
+    if(input$include_hto){
+      rna <- ifelse__(is.null(values[[paste0("GEOrnadata-",type)]]), values[[paste0("GEOproteindata-",type)]], values[[paste0("GEOrnadata-",type)]])
+      hto <- ifelse__(is.null(values[[paste0("GEOhtodata-",type)]]), values[[paste0("GEOproteindata-",type)]], values[[paste0("GEOhtodata-",type)]])
+      if(identical(values[["GEOproteindata-data"]],values[["GEOrnadata-data"]]) & identical(values[["GEOproteindata-data"]],values[["GEOhtodata-data"]])){
+        if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+          other <- values[[paste0("GEOmetadata-",type)]]
+          return(list(protein = protein, other = other))
+        }else{
+          return(list(protein = protein))
+        }
+      }else if(identical(values[["GEOproteindata-data"]],values[["GEOrnadata-data"]])){
+        if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+          other <- values[[paste0("GEOmetadata-",type)]]
+          return(list(protein = protein, hto=hto, other = other))
+        }else{
+          return(list(protein = protein, hto=hto))
+        }
+      }else if(identical(values[["GEOproteindata-data"]],values[["GEOhtodata-data"]])){
+        if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+          other <- values[[paste0("GEOmetadata-",type)]]
+          return(list(protein = protein, rna=rna, other = other))
+        }else{
+          return(list(protein = protein, rna=rna))        
+        }
+      }else{
+        if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+          other <- values[[paste0("GEOmetadata-",type)]]
+          return(list(protein = protein, rna=rna, hto=hto, other = other))
+        }else{
+          return(list(protein = protein, rna=rna, hto=hto))        
+        }
+      }
+    }else{
+      rna <- ifelse__(is.null(values[[paste0("GEOrnadata-",type)]]), values[[paste0("GEOproteindata-",type)]], values[[paste0("GEOrnadata-",type)]])
+      if(identical(values[["GEOproteindata-data"]],values[["GEOrnadata-data"]])){
+        if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+          other <- values[[paste0("GEOmetadata-",type)]]
+          return(list(protein = protein, other = other))
+        }else{
+          return(list(protein = protein))        
+        }
+      }else{
+        if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+          other <- values[[paste0("GEOmetadata-",type)]]
+          return(list(protein = protein, other = other, rna=rna))
+        }else{
+          return(list(protein = protein, rna=rna))        
+        }
+      }
+    }
+  }else{
+    if(!is.null(values[[paste0("GEOmetadata-",type)]])){
+      other <- values[[paste0("GEOmetadata-",type)]]
+      return(list(other = other))
+    }else{
+      return(list(NULL))        
+    }
+  }
+}
 
 ifelse__ <- function(x, y, z, extra_condition=NULL){
   if(x){
@@ -752,13 +814,14 @@ server <- function(input, output, session) {
       paste(input$id, '.yaml', sep='')
     },
     content = function(con) {
-      print(input$dataset)
       data <- list(download=list(setup=ifelse__(input$dataset=="geo", "geo", NULL),
                                  download=ifelse__(input$dataset=="geo" | input$dataset=="array", input$download, input$dataset),
                                  id = input$id,
                                  description = input$columns,
                                  keyword = makelist(input),
-                                 ignore_hto = ifelse__(is.null(input$include_hto), NULL, !input$include_hto)
+                                 ignore_hto = ifelse__(is.null(input$include_hto), NULL, !input$include_hto),
+                                 wlink = makelist_4(values, input, type = "data"),
+                                 fname = makelist_4(values, input, type = "url")
                                  ),
                   load=makelist_3(input),
                   metadata=list(doi=input$doi,

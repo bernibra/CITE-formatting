@@ -63,7 +63,7 @@ appCSS <-
        top: 0px;
        left: 0px;
        width: 100%;
-       padding: 5px 0px 5px 0px;
+       padding: 0px 0px 0px 0px;
        text-align: center;
        font-weight: bold;
        font-size: 100%;
