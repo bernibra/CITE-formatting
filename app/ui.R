@@ -1,6 +1,8 @@
 library(shiny)
 library(shinyjs)
 library(shinyalert)
+library(bslib)
+
 # library(DT)
 
 labelMandatory <- function(label) {
@@ -22,7 +24,7 @@ tabTable <- function(id) {
 appCSS <-
   "
    html{
-       background-color: #bdbdbd;
+       background-color: #D9D9D9;
    }
    .mandatory_star { 
        color: red;
@@ -37,17 +39,18 @@ appCSS <-
        color: red;
        }
    body {
-       background: #bdbdbd;
+       background: #D9D9D9;
        }
    #header {
-       background: #f0f0f0;
-       border-bottom: 1px solid #ddd;
-       padding: 15px 15px 10px;
-       }
+       background: #F7F7F7;
+       border-bottom: 1px solid #bdbdbd;
+       padding: 15px 15px 20px;
+       font-family: 'Menlo', sans-serif;
+   }
    .loaddata {
        margin: 0px 0px 5px 0px;
-       background: #ffffff;
-       border: 0.5px solid #d9d9d9;
+       background: #F4F1F2;
+       border: 0.5px solid #DDDCDC;
        padding: 10px 10px 5px;
        font-size: 100%;
        }
@@ -65,27 +68,42 @@ appCSS <-
        font-weight: bold;
        font-size: 100%;
        color: #000000;
-       background-color: #fde0dd;
+       background-color: #C5DCD2;
        z-index: 105;
    }
    .container{
        width: 80%;
        border-radius: 5px;
        border: 1px;
-       background-color: #f0f0f0;
+       background-color: #F7F7F7;
        position: relative;
-       box-shadow: 2px 2px 2px #737373;
+       box-shadow: 3px 3px 3px #737373;
        margin-top: 30px;
-       padding-left: 30px;
-       padding-right: 30px;
-       padding-top: 5px;
-       padding-bottom: 5px;
+       padding-left: 40px;
+       padding-right: 40px;
+       padding-top: 10px;
+       padding-bottom: 10px;
        margin-bottom: 20px;
-    }
+       font-family: 'Menlo', sans-serif;
+   }
+   hr{
+       border-bottom: 1px solid #bdbdbd;
+   }
 "
-
+theme <- bs_theme(
+  # Controls the default grayscale palette
+  bg = "#FFF7FB", fg = "black",
+  # Controls the accent (e.g., hyperlink, button, etc) colors
+  primary = "#C9AFC4", secondary = " #C5DCD2",
+  base_font = "Helvetica Neue",
+  code_font = "Helvetica Neue",
+  heading_font = "Helvetica Neue",
+  # Can also add lower-level customization
+  "input-border-color" = "#C9AFC4"
+)
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
+  # theme = theme,
   shinyjs::useShinyjs(),
   shinyjs::inlineCSS(appCSS),
   title = "Prepare CITE-seq dataset",

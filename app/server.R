@@ -3,8 +3,6 @@ library(GEOquery)
 library(markdown)
 library(dplyr)
 
-jsResetCode <- "shinyjs.reset = function() {history.go(0)}" # Define the js method that resets the page
-
 labelMandatory <- function(label) {
   tagList(
     label,
@@ -29,6 +27,118 @@ regfilter <- function(x, y, z){
     return("")
   }else{
     return(paste(w, collapse ="|"))
+  }
+}
+
+is.all.empty <- function(a){
+  return(all(!sapply(a, function(x) ifelse(is.null(x), T, x==""))))
+}
+
+makelist <- function(input){
+  if(!is.null(input$keyword_protein)==1){
+    keyword_protein <- tolower(input$keyword_protein)
+    if(input$include_hto){
+      keyword_rna <- ifelse(is.null(input$keyword_rna), "", tolower(input$keyword_rna))
+      keyword_hto <- ifelse(is.null(input$keyword_hto), "", tolower(input$keyword_hto))
+      if(keyword_protein==keyword_rna & keyword_protein==keyword_hto){
+        return(list(protein = keyword_protein))
+      }else if(keyword_protein==keyword_rna){
+        return(list(protein = keyword_protein, hto=keyword_hto))
+      }else if(keyword_protein==keyword_hto){
+        return(list(protein = keyword_protein, rna=keyword_rna))        
+      }else{
+        return(list(protein = keyword_protein, rna=keyword_rna, hto=keyword_hto))
+      }
+    }else{
+      keyword_rna <- ifelse(is.null(input$keyword_rna), "", tolower(input$keyword_rna))
+      if(keyword_protein==keyword_rna){
+        return(list(protein = keyword_protein))
+      }else{
+        return(list(protein = keyword_protein, rna=keyword_rna))
+      }
+    }
+  }else{
+    return(NULL)
+  }
+}
+
+makelist_2 <- function(input, type){
+  return(
+    list(
+      transpose = input[[paste0("load_",type,"-transpose")]],
+      separate_samples = input[[paste0("load_",type,"-separate_samples")]],
+      keyword = ifelse_(input[[paste0("load_",type,"-keywords_load")]], NULL, input[[paste0("load_",type,"-keywords_load")]]),
+      class = ifelse_(input[[paste0("load_",type,"-class")]], NULL,  input[[paste0("load_",type,"-class")]]),
+      h5key = ifelse_(input[[paste0("load_",type,"-h5key")]],  NULL, input[[paste0("load_",type,"-h5key")]]),
+      altexp = ifelse_(input[[paste0("load_",type,"-altexp")]], NULL,  input[[paste0("load_",type,"-altexp")]]),
+      access = ifelse_(input[[paste0("load_",type,"-access")]], NULL,  input[[paste0("load_",type,"-access")]]),
+      drop = ifelse_(input[[paste0("load_",type,"-drop")]], NULL,  input[[paste0("load_",type,"-drop")]]),
+      keep = ifelse_(input[[paste0("load_",type,"-keep")]], NULL,  input[[paste0("load_",type,"-keep")]]),
+      coldata = ifelse_(input[[paste0("load_",type,"-coldata")]], NULL,
+                        stringr::str_trim(strsplit(x = input[[paste0("load_",type,"-coldata")]], split = ";")[[1]])),
+      cells = ifelse_(input[[paste0("load_",type,"-cells")]], NULL,  input[[paste0("load_",type,"-cells")]]),
+      replace = ifelse_(input[[paste0("load_",type,"-replace")]], NULL,  input[[paste0("load_",type,"-replace")]]),
+      features = ifelse_(input[[paste0("load_",type,"-features")]], NULL,  input[[paste0("load_",type,"-features")]]),
+      column = input[[paste0("load_",type,"-column")]],
+      sample_groups = ifelse_(input$samplegroups, NULL,
+                              stringr::str_trim(strsplit(x = input$samplegroups, split = ";")[[1]])),
+      samples = ifelse__(input$sampleoption=="na", NULL,
+                         ifelse(is.null(input$samplefile),  input$sampleid,
+                                list(file=input$samplefile,
+                                     key=input$samplekey,
+                                     value=stringr::str_trim(strsplit(x = input$samplevalue, split = ";")))))
+    ))
+}
+
+makelist_3 <- function(input){
+  if(input$separate_protocols){
+    if(input$include_hto){
+      return(list(
+        protein = makelist_2(input, "protein"),
+        rna = makelist_2(input, "rna"),
+        hto = makelist_2(input, "hto")
+      ))  
+    }else{
+      return(list(
+        protein = makelist_2(input, "protein"),
+        rna = makelist_2(input, "rna")
+      ))
+    } 
+  }else{
+    return(makelist_2(input, "protein"))  
+  }
+}
+
+
+ifelse__ <- function(x, y, z, extra_condition=NULL){
+  if(x){
+    return(y)
+  }else{
+    if(!is.null(extra_condition)){
+      if(extra_condition){
+        return(y)
+      }else{
+        return(z)
+      }
+    }else{
+      return(z)
+    }
+  }
+}
+
+ifelse_ <- function(x, y, z, include_empty=T){
+  if(is.null(x)){
+    return(y)
+  }else{
+    if(include_empty){
+      if(x==""){
+        return(y)
+      }else{
+        return(z)
+      }
+    }else{
+      return(z)
+    }
   }
 }
 
@@ -407,28 +517,6 @@ server <- function(input, output, session) {
     }
   })
   
-  # Filtering of hto files for GEO database  
-  observeEvent(c(input$columns, input$keyword_hto, input$include_hto), {
-    condition <- ifelse(is.null(input$columns), "na", input$columns)
-    if (condition!="na" & input$include_hto) {
-      output$selected_var <- NULL
-      output$load_stepone <- NULL
-      output$load_line <- NULL
-      output$load_steptwo <- NULL
-      output$tablegeo_hto <- renderTable({
-        values$pdata %>% select(input$columns) %>% dplyr::rename_with(function(x) "HTO data") %>%  filter_at(1, all_vars(grepl(input$keyword_hto, .)))
-      })
-    }else if(condition!="na" & !input$include_hto){
-      output$selected_var <- NULL
-      output$tablegeo_hto <- NULL
-      output$load_line <- NULL
-      output$load_stepone <- NULL
-      output$load_steptwo <- NULL
-      output$htoregex <- NULL
-    }else{
-      output$tablegeo_hto <- NULL
-    }
-  })
   
   # Button to signal the end of data selection in GEO
   observeEvent(input$geodone, {
@@ -442,6 +530,8 @@ server <- function(input, output, session) {
     condition <- ifelse(is.null(input$columns), "na", input$columns)
     if(geodownload!="geo" & arraydownload!="array" & is.null(values[["GEOproteindata-data"]])){
       shinyalert("Oops!", "You forgot to upload a file...", type = "error")
+    }else if(condition=="na" & geodownload=="geo"){
+      shinyalert("Oops!", "You forgot to pick a column...", type = "error")
     }else if(condition!="na"){
       output$load_line = renderUI(hr())
       shinyjs::disable("download_stepthree")
@@ -452,9 +542,9 @@ server <- function(input, output, session) {
           h4("Load data"),
           includeMarkdown("../docu/geo-load-2.md"),
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
-                        filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)
-                      , selected = "na"),
-          actionButton("geodownloadone", "download example")
+                        filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)),
+          actionButton("geodownloadone", "download example"),
+          textOutput("downloadmessage")
         )
       })
       output$load_steptwo = renderUI({
@@ -617,21 +707,67 @@ server <- function(input, output, session) {
                  }
                })
   
+  # Filtering of hto files for GEO database  
+  observeEvent(c(input$columns, input$keyword_hto, input$include_hto), {
+    condition <- ifelse(is.null(input$columns), "na", input$columns)
+    if(input$include_hto){
+      shinyjs::enable("keyword_hto")
+    }else{
+      shinyjs::disable("keyword_hto")
+    }
+    
+    if (condition!="na" & input$include_hto) {
+      output$selected_var <- NULL
+      output$load_stepone <- NULL
+      output$load_line <- NULL
+      output$load_steptwo <- NULL
+      output$tablegeo_hto <- renderTable({
+        values$pdata %>% select(input$columns) %>% dplyr::rename_with(function(x) "HTO data") %>%  filter_at(1, all_vars(grepl(input$keyword_hto, .)))
+      })
+    }else if(condition!="na" & !input$include_hto){
+      output$selected_var <- NULL
+      output$tablegeo_hto <- NULL
+      output$load_line <- NULL
+      output$load_stepone <- NULL
+      output$load_steptwo <- NULL
+      output$htoregex <- NULL
+    }else{
+      output$tablegeo_hto <- NULL
+    }
+  })
+  
+  
+  observeEvent(input$geodownloadone,{
+      accession <- values$pdata$geo_accession[values$pdata %>% pull(input$columns) == input$download_one_file]
+      GEOquery::getGEOSuppFiles(accession, baseDir = "../data/")
+      output$downloadmessage <- renderText({
+        "stored in './data/'"
+      })
+      }
+  )
+  
+  
   output$downloadData <- downloadHandler(
     filename = function() {
-      paste(input$alias, '.yaml', sep='')
+      paste(input$id, '.yaml', sep='')
     },
     content = function(con) {
-      data <- list(download=list(setup=input$setup_type,
-                                 download=input$download,
-                                 id = input$id),
-                   load=list(separate_samples=input$separate_samples),
-                   metadata=list(doi=input$doi,
-                                 description=ifelse(input$description=="",NULL, input$description),
-                                 tissue=ifelse(input$tissue=="",NULL, input$tissue),
-                                 species=ifelse(input$species=="",NULL, input$species),
-                                 alias=input$alias,
-                                 genome_build=ifelse(input$genome_build=="",NULL, input$genome_build)))
+      print(input$dataset)
+      data <- list(download=list(setup=ifelse__(input$dataset=="geo", "geo", NULL),
+                                 download=ifelse__(input$dataset=="geo" | input$dataset=="array", input$download, input$dataset),
+                                 id = input$id,
+                                 description = input$columns,
+                                 keyword = makelist(input),
+                                 ignore_hto = ifelse__(is.null(input$include_hto), NULL, !input$include_hto)
+                                 ),
+                  load=makelist_3(input),
+                  metadata=list(doi=input$doi,
+                        description=ifelse_(input$description,NULL, input$description),
+                        tissue=ifelse_(input$tissue,NULL, input$tissue),
+                        species=ifelse_(input$species,NULL, input$species),
+                        alias=input$alias,
+                        genome_build=ifelse_(input$genome_build,NULL, input$genome_build))
+      )
       yaml::write_yaml(data, con)
     }
   )
