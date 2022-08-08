@@ -692,7 +692,7 @@ server <- function(input, output, session) {
       )
     })
   })
-  
+
   observeEvent(input$sampleoption,{
     if(input$sampleoption=="na"){
       shinyjs::enable("downloadData")

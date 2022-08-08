@@ -63,7 +63,7 @@ appCSS <-
        top: 0px;
        left: 0px;
        width: 100%;
-       padding: 0px 0px 0px 0px;
+       padding: 10px 0px 0px;
        text-align: center;
        font-weight: bold;
        font-size: 100%;
@@ -72,7 +72,7 @@ appCSS <-
        z-index: 105;
    }
    .container{
-       width: 80%;
+       width: 95%;
        border-radius: 5px;
        border: 1px;
        background-color: #F7F7F7;
@@ -89,6 +89,18 @@ appCSS <-
    hr{
        border-bottom: 1px solid #bdbdbd;
    }
+   
+   @media all and (max-width: 1200px) and (min-width: 900px) {
+     .container{
+         width: 80%;
+     }
+   }
+   @media all and (min-width: 1200px) {
+     .container{
+         width: 65%;
+     }
+   }
+   
 "
 theme <- bs_theme(
   # Controls the default grayscale palette
