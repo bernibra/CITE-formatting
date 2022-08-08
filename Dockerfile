@@ -10,11 +10,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxt-dev \
     libssl-dev \
     libssh2-1-dev \
+    xml2 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN install.r shiny shinyalert bslib dplyr purrr stringr markdown BiocManager shinyjs 
 
-RUN R -e "BiocManager::install(c('GEOquery', 'ArrayExpress'), version = BiocManager::version())"
+RUN Rscript -e "BiocManager::install(c('GEOquery', 'ArrayExpress'), version = BiocManager::version())"
 
 RUN addgroup --system app \
     && adduser --system --ingroup app app
