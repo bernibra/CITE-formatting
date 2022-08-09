@@ -609,6 +609,7 @@ server <- function(input, output, session) {
       paste(input$id, '.yaml', sep='')
     },
     content = function(con) {
+      print(names(input))
       data <- list(download=list(setup=ifelse__(input$dataset=="geo", "geo", NULL),
                                  download=ifelse__(input$dataset=="geo" | input$dataset=="array", input$download, input$dataset),
                                  id = input$id,

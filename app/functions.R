@@ -83,7 +83,7 @@ makelist_2 <- function(input, type){
       cells = ifelse_(input[[paste0("load_",type,"-extra_class-cells")]], NULL,  input[[paste0("load_",type,"-extra_class-cells")]]),
       replace = ifelse_(input[[paste0("load_",type,"-extra_class-replace")]], NULL,  input[[paste0("load_",type,"-extra_class-replace")]]),
       features = ifelse_(input[[paste0("load_",type,"-extra_class-features")]], NULL,  input[[paste0("load_",type,"-extra_class-features")]]),
-      column = input[[paste0("load_",type,"-column")]],
+      column = input[[paste0("load_",type,"-extra_class-column")]],
       sample_groups = ifelse_(input$samplegroups, NULL,
                               stringr::str_trim(strsplit(x = input$samplegroups, split = ";")[[1]])),
       samples = ifelse__(input$sampleoption=="na", NULL,
@@ -171,7 +171,7 @@ makelist_4 <- function(values, input, type="data"){
       other <- values[[paste0("GEOmetadata-",type)]]
       return(list(other = other))
     }else{
-      return(list(NULL))        
+      return(NULL)        
     }
   }
 }

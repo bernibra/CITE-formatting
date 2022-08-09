@@ -25,14 +25,10 @@ RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" > /usr/lib/
 RUN addgroup --system app \
     && adduser --system --ingroup app app
 WORKDIR /home
-RUN ls
 COPY app ./app/
 COPY docu ./docu/
-RUN ls
-RUN pwd
 RUN chown app:app -R /home/app/
 RUN chown app:app -R /home/app/
-RUN find .
 USER app
 EXPOSE 3838
 CMD ["R", "-e", "shiny::runApp('/home/app')"]
