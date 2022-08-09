@@ -593,7 +593,6 @@ server <- function(input, output, session) {
     }
   })
   
-  
   observeEvent(input$geodownloadone,{
       accession <- values$pdata$geo_accession[values$pdata %>% pull(input$columns) == input$download_one_file]
       GEOquery::getGEOSuppFiles(accession, baseDir = "../data/")
@@ -603,14 +602,32 @@ server <- function(input, output, session) {
       }
   )
   
-  
   output$downloadData <- downloadHandler(
     filename = function() {
       paste(input$id, '.yaml', sep='')
     },
     content = function(con) {
+      
+      if (input$geodownload=="geo"){
+        output$xtra_line = renderUI({
+          hr()
+        })
+        output$xtra_stepone = renderUI({
+          tagList(
+            h4("Extra metadata"),
+            p("Extract any relevant columns from the GEO metadata"),
+            varSelectInput("xtra_columns", "columns", data = values$pdata, multiple = TRUE),
+            downloadButton('downloadExtra', 'Download', width = "60%"),
+            br()
+          )
+        })
+        output$selected_var <- NULL
+      }
+        
       data <- list(download=list(setup=ifelse__(input$dataset=="geo", "geo", NULL),
-                                 download=ifelse__(input$dataset=="geo" | input$dataset=="array", input$download, input$dataset),
+                                 download=ifelse__(input$dataset=="geo" | input$dataset=="array", 
+                                                   ifelse__(input$dataset=="geo", input$geodownload, input$arraydownload),
+                                                   input$dataset),
                                  id = input$id,
                                  description = input$columns,
                                  keyword = makelist(input),
@@ -627,6 +644,29 @@ server <- function(input, output, session) {
                         genome_build=ifelse_(input$genome_build,NULL, input$genome_build))
       )
       yaml::write_yaml(data, con)
+    }
+  )
+  
+  observeEvent(input$xtra_columns, {
+    if(length(input$xtra_columns)==0){
+      shinyjs::disable("downloadExtra")
+    }else{
+      shinyjs::enable("downloadExtra")
+      columns <- input$xtra_columns
+      output$tablextra <- renderTable({
+        values$pdata %>% select(!!!input$xtra_columns)
+      })
+    }
+  })
+  
+  output$downloadExtra <- downloadHandler(
+    filename = function() {
+      paste(input$id, '.csv', sep='')
+    },
+    content = function(con) {
+      xtra_data <- values$pdata %>% select(!!!input$xtra_columns)
+      print(xtra_data)
+      write.table(xtra_data, con)
     }
   )
   

@@ -74,6 +74,15 @@ appCSS <-
        margin-bottom: 20px;
        font-family: 'Menlo', sans-serif;
    }
+   .scrollable{
+       padding: 0px;
+       margin: 0px;
+       width: 100%;
+       max-height: 500px;
+       overflow-x: auto;
+       overflow-y: auto;
+       white-space: nowrap;
+   }
    hr{
        border-bottom: 1px solid #bdbdbd;
    }

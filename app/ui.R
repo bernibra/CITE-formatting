@@ -81,6 +81,14 @@ ui <- fluidPage(
       ),
     ),
     fluidRow(
+      column(12,
+             fluidRow(
+               uiOutput('xtra_line'),
+               column(12, uiOutput('xtra_stepone'))
+             )
+      ),
+    ),
+    fluidRow(
       column(12, 
         uiOutput("selected_var"),
         uiOutput("main"),
@@ -95,6 +103,11 @@ ui <- fluidPage(
           ),
           column(4,
             tableOutput("tablegeo_hto")
+          )
+        ),
+        fluidRow(
+          column(12, 
+                 div(class="scrollable", tableOutput("tablextra")),
           )
         ),
       )
