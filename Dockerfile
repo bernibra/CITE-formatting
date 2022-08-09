@@ -27,8 +27,9 @@ RUN addgroup --system app \
 WORKDIR /home
 COPY app ./app/
 COPY docu ./docu/
+COPY data ./data/
 RUN chown app:app -R /home/app/
-RUN chown app:app -R /home/app/
+RUN chown app:app -R /home/data
 USER app
 EXPOSE 3838
 CMD ["R", "-e", "shiny::runApp('/home/app')"]

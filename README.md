@@ -19,7 +19,7 @@ git clone https://github.com/bernibra/CITE-formatting.git
 Type the following commands in the working directory (you might need [sudo rights](https://docs.docker.com/engine/install/linux-postinstall/)):
 ```
 docker build --rm --force-rm -t cite-formatting .
-docker run -p 3838:3838 cite-formatting
+docker run -p 3838:3838 -v $PWD/data:/home/data --user "$(id -u):$(id -g)" cite-formatting
 ```
 
 ### 4. Introduce a new dataset
