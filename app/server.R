@@ -470,7 +470,7 @@ server <- function(input, output, session) {
                      label=tags$span(style="font-weight: normal;","Adding sample information can be done in different ways:"),
                      choices = c("No sample information"="na",
                                  'if the sample information is already one of the columns, set as colData (see on the left), one can simply define the column name.'="sampleid",
-                                 "if the sample information is found in an extermal file, this needs to have been first uploaded as metadata. If this is the case, the pipeline will assume that there are one or more columns that define the sample id.
+                                 "if the sample information is found in an extermal file, the pipeline will assume that there are one or more columns that define the sample id. At first, it will look for the data in the metadata folder; if nothing is found, it will look in the folder of the experiment.
 "="extfile",
                                  "if samples are separated by file, but there are different types of files (different tissues or experiments) that need to be separately considered, one can define groups of files that will be considered separately."="sample_group"),
                      selected = "na"),
