@@ -6,7 +6,7 @@ library(markdown)
 library(dplyr)
 source("functions.R")
 
-options(shiny.port = 3838, shiny.host = '0.0.0.0')
+#options(shiny.port = 3838, shiny.host = '0.0.0.0')
 
 # CSS to use in the app
 appCSS <-
