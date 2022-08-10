@@ -595,6 +595,9 @@ server <- function(input, output, session) {
   
   observeEvent(input$geodownloadone,{
       accession <- values$pdata$geo_accession[values$pdata %>% pull(input$columns) == input$download_one_file]
+      if(length(accession)>1){
+        accession <- accession[1]
+      }
       GEOquery::getGEOSuppFiles(accession, baseDir = "../data/")
       output$downloadmessage <- renderText({
         "stored in './data/'"
@@ -608,7 +611,7 @@ server <- function(input, output, session) {
     },
     content = function(con) {
       
-      if (input$geodownload=="geo"){
+      if (ifelse(is.null(input$geodownload), FALSE, input$geodownload=="geo")){
         output$xtra_line = renderUI({
           hr()
         })
