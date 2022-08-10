@@ -266,7 +266,9 @@ server <- function(input, output, session) {
     condition <- input$doi!="" & input$alias!="" & input$dataset!="na" & id!="" & geodownload!="na" & arraydownload!="na"
     
     if (condition){
-        if(geodownload!="geo" & arraydownload!="array"){
+        if(input$dataset=="impossible"){
+          actionButton("geo_download_button_4", "loading info")
+        }else if(geodownload!="geo" & arraydownload!="array"){
           actionButton("geo_download_button_2", "loading info")
         }else if(geodownload=="geo"){ 
           actionButton("geo_download_button", "load GEO")
@@ -344,6 +346,22 @@ server <- function(input, output, session) {
   
   })
   
+  observeEvent(input$geo_download_button_4, {
+    shinyjs::disable("geodownload")
+    shinyjs::disable("dataset")
+    shinyjs::disable("alias")
+    shinyjs::disable("doi")
+    shinyjs::disable("id")
+    output$download_stepfour = renderUI({
+      tagList(
+        br(),
+        p("The only thing to consider here is whether or not there is HTO data"),
+        checkboxInput("include_hto", "Include HTO data", value = TRUE),
+        actionButton("geodone", "done")
+      )
+    })
+  })
+  
   # Filtering of Protein files for GEO database
   observeEvent(c(input$columns, input$keyword_protein), {
     if (input$columns!="na") {
@@ -385,7 +403,7 @@ server <- function(input, output, session) {
     output$load_line <- NULL
     output$tablegeo_hto <- NULL
     condition <- ifelse(is.null(input$columns), "na", input$columns)
-    if(geodownload!="geo" & arraydownload!="array" & is.null(values[["GEOproteindata-data"]])){
+    if(geodownload!="geo" & arraydownload!="array" & input$dataset!="impossible" & is.null(values[["GEOproteindata-data"]])){
       shinyalert("Oops!", "You forgot to upload a file...", type = "error")
     }else if(condition=="na" & geodownload=="geo"){
       shinyalert("Oops!", "You forgot to pick a column...", type = "error")
@@ -540,9 +558,6 @@ server <- function(input, output, session) {
                  }else if(input$dataset=="impossible"){
                    output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
                    addDownloadlinkServer("Impossiblefiles", values, withoutlink=T)
-                   addDownloadlinkServer("GEOproteindata", values)
-                   addDownloadlinkServer("GEOrnadata", values)
-                   addDownloadlinkServer("GEOhtodata", values)
                  }else if(input$dataset=="geo"){
                    output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
                    addDownloadlinkServer("GEOproteindata", values)
