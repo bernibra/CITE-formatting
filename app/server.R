@@ -635,8 +635,8 @@ server <- function(input, output, session) {
                                  description = input$columns,
                                  keyword = makelist(input),
                                  ignore_hto = ifelse__(is.null(input$include_hto), NULL, !input$include_hto),
-                                 wlink = makelist_4(values, input, type = "data"),
-                                 fname = makelist_4(values, input, type = "url")
+                                 fname = makelist_4(values, input, type = "data"),
+                                 wlink = makelist_4(values, input, type = "url")
                                  ),
                   load=makelist_3(input),
                   metadata=list(doi=input$doi,
