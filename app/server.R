@@ -75,7 +75,7 @@ loaddataServer <- function(id, on=T, typ="protein"){
           tagList(div(class="loaddata", 
             h4(paste(typ, "data", sep=" ")),
             checkboxInput(ns("transpose"), "transpose", value = FALSE),
-            checkboxInput(ns("separate_samples"), "separate samples", value = TRUE),
+            checkboxInput(ns("separate_samples"), "merge different files together", value = TRUE),
             textInput(ns("keywords_load"), "search file by pattern", placeholder = "e.g. 'CITE$'"),
             selectInput(ns('class'), 
                         label="data format",
