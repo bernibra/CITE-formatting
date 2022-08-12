@@ -117,12 +117,24 @@ makelist_4 <- function(values, input, type="data"){
   
   if(!is.null(values[[paste0("GEOproteindata-",type)]])){
     protein <- values[[paste0("GEOproteindata-",type)]]
+    if(type=="group" & length(unique(protein))==1){
+      protein <- NULL
+    }
     if(input$include_hto){
       rna <- ifelse__(is.null(values[[paste0("GEOrnadata-",type)]]), values[[paste0("GEOproteindata-",type)]], values[[paste0("GEOrnadata-",type)]])
       hto <- ifelse__(is.null(values[[paste0("GEOhtodata-",type)]]), values[[paste0("GEOproteindata-",type)]], values[[paste0("GEOhtodata-",type)]])
+      if(type=="group" & length(unique(rna))==1){
+        rna <- NULL
+      }
+      if(type=="group" & length(unique(hto))==1){
+        hto <- NULL
+      }
       if(identical(values[["GEOproteindata-data"]],values[["GEOrnadata-data"]]) & identical(values[["GEOproteindata-data"]],values[["GEOhtodata-data"]])){
         if(!is.null(values[[paste0("GEOmetadata-",type)]])){
           other <- values[[paste0("GEOmetadata-",type)]]
+          if(type=="group" & length(unique(other))==1){
+            other <- NULL
+          }
           return(list(protein = protein, other = other))
         }else{
           return(list(protein = protein))
@@ -130,6 +142,9 @@ makelist_4 <- function(values, input, type="data"){
       }else if(identical(values[["GEOproteindata-data"]],values[["GEOrnadata-data"]])){
         if(!is.null(values[[paste0("GEOmetadata-",type)]])){
           other <- values[[paste0("GEOmetadata-",type)]]
+          if(type=="group" & length(unique(other))==1){
+            other <- NULL
+          }
           return(list(protein = protein, hto=hto, other = other))
         }else{
           return(list(protein = protein, hto=hto))
@@ -137,6 +152,9 @@ makelist_4 <- function(values, input, type="data"){
       }else if(identical(values[["GEOproteindata-data"]],values[["GEOhtodata-data"]])){
         if(!is.null(values[[paste0("GEOmetadata-",type)]])){
           other <- values[[paste0("GEOmetadata-",type)]]
+          if(type=="group" & length(unique(other))==1){
+            other <- NULL
+          }
           return(list(protein = protein, rna=rna, other = other))
         }else{
           return(list(protein = protein, rna=rna))        
@@ -144,6 +162,9 @@ makelist_4 <- function(values, input, type="data"){
       }else{
         if(!is.null(values[[paste0("GEOmetadata-",type)]])){
           other <- values[[paste0("GEOmetadata-",type)]]
+          if(type=="group" & length(unique(other))==1){
+            other <- NULL
+          }
           return(list(protein = protein, rna=rna, hto=hto, other = other))
         }else{
           return(list(protein = protein, rna=rna, hto=hto))        
@@ -154,6 +175,9 @@ makelist_4 <- function(values, input, type="data"){
       if(identical(values[["GEOproteindata-data"]],values[["GEOrnadata-data"]])){
         if(!is.null(values[[paste0("GEOmetadata-",type)]])){
           other <- values[[paste0("GEOmetadata-",type)]]
+          if(type=="group" & length(unique(other))==1){
+            other <- NULL
+          }
           return(list(protein = protein, other = other))
         }else{
           return(list(protein = protein))        
@@ -161,6 +185,9 @@ makelist_4 <- function(values, input, type="data"){
       }else{
         if(!is.null(values[[paste0("GEOmetadata-",type)]])){
           other <- values[[paste0("GEOmetadata-",type)]]
+          if(type=="group" & length(unique(other))==1){
+            other <- NULL
+          }
           return(list(protein = protein, other = other, rna=rna))
         }else{
           return(list(protein = protein, rna=rna))        
@@ -170,6 +197,9 @@ makelist_4 <- function(values, input, type="data"){
   }else{
     if(!is.null(values[[paste0("GEOmetadata-",type)]])){
       other <- values[[paste0("GEOmetadata-",type)]]
+      if(type=="group" & length(unique(other))==1){
+        other <- NULL
+      }
       return(list(other = other))
     }else{
       return(NULL)        

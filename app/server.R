@@ -149,7 +149,7 @@ dataModal <- function(ns, failed = FALSE, withoutlink=F) {
       ),
       span('make sure the url is public and working'),
       
-      textInput(ns("group"), labelMandatory("grouping level"),
+      textInput(ns("group"), "grouping level",
                 placeholder = "e.g. Mouse"
       ),
       span('optional field if you want to group different files'),
