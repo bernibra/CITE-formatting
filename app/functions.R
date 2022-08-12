@@ -114,6 +114,7 @@ makelist_3 <- function(input){
 }
 
 makelist_4 <- function(values, input, type="data"){
+  
   if(!is.null(values[[paste0("GEOproteindata-",type)]])){
     protein <- values[[paste0("GEOproteindata-",type)]]
     if(input$include_hto){

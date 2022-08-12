@@ -123,13 +123,13 @@ dataModal <- function(ns, failed = FALSE, withoutlink=F) {
   if(withoutlink){
     modalDialog(
       
-      textInput(ns("file"), "file name",
-                placeholder = 'e.g. metadata.csv'
+      textInput(ns("file"), labelMandatory("file name"),
+                placeholder = 'e.g. file.csv'
       ),
       span('make sure the file name has the right extension'),
       
       if (failed)
-        div(tags$b("Invalid name file or url", style = "color: red;")),
+        div(tags$b("Invalid name file", style = "color: red;")),
       
       footer = tagList(
         modalButton("Cancel"),
@@ -139,15 +139,20 @@ dataModal <- function(ns, failed = FALSE, withoutlink=F) {
   }else{
     modalDialog(
       
-      textInput(ns("file"), "file name",
-                placeholder = 'e.g. metadata.csv'
+      textInput(ns("file"), labelMandatory("file name"),
+                placeholder = 'e.g. file.csv'
       ),
       span('make sure the file name has the right extension'),
       
-      textInput(ns("url"), "url",
+      textInput(ns("url"), labelMandatory("url"),
                 placeholder = NULL
       ),
       span('make sure the url is public and working'),
+      
+      textInput(ns("group"), labelMandatory("grouping level"),
+                placeholder = "e.g. Mouse"
+      ),
+      span('optional field if you want to group different files'),
       
       if (failed)
         div(tags$b("Invalid name file or url", style = "color: red;")),
@@ -183,6 +188,8 @@ addDownloadlinkServer <-function(id, values, withoutlink=F){
             !is.null(url) && nzchar(url) && url!="") {
           values[[ns("url")]] <- rbind(values[[ns("url")]], url)
           values[[ns("data")]] <- rbind(values[[ns("data")]], input$file)
+          values[[ns("group")]] <- rbind(values[[ns("group")]], input$group)
+          
           removeModal()
         } else {
           showModal(dataModal(ns, failed = TRUE, withoutlink=withoutlink))
@@ -652,6 +659,7 @@ server <- function(input, output, session) {
                                  ignore_hto = ifelse__(is.null(input$include_hto), NULL, !input$include_hto),
                                  fname = makelist_4(values, input, type = "data"),
                                  wlink = makelist_4(values, input, type = "url"),
+                                 fgroup = makelist_4(values, input, type = "group"),
                                  source = ifelse__(is.null(input$source), NULL, input$source),
                                  comment = ifelse__(is.null(input$comment), NULL, input$comment)
                                  ),
