@@ -34,7 +34,9 @@ askextraclassServer <- function(id, class, typ){
             textInput(ns("features"),  placeholder = "pattern for features file", label = tags$span(style="font-weight: normal;","features")),
             textInput(ns("cells"),  placeholder = "pattern for cell file", label = tags$span(style="font-weight: normal;","cells")),
             textInput(ns("replace"),  placeholder = "pattern for matrix file", label = tags$span(style="font-weight: normal;","matrix")),
-            numericInput(ns("column"), label = tags$span(style="font-weight: normal;","column used in the features file"),   min = 1,value=1)
+            numericInput(ns("column"), label = tags$span(style="font-weight: normal;","column used in the features file"),   min = 1,value=1),
+            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
+            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
           )
         })
       }else if(class=="access"){
