@@ -665,7 +665,7 @@ server <- function(input, output, session) {
                                  wlink = makelist_4(values, input, type = "url"),
                                  fgroup = makelist_4(values, input, type = "group"),
                                  source = ifelse__(is.null(input$source), NULL, input$source),
-                                 comment = ifelse__(is.null(input$comment), NULL, input$comment)
+                                 comments = ifelse__(is.null(input$comment), NULL, input$comment)
                                  ),
                   load=makelist_3(input),
                   metadata=list(doi=input$doi,
