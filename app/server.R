@@ -15,7 +15,9 @@ askextraclassServer <- function(id, class, typ){
         output$controls <-  renderUI({
           ns <- session$ns
           tagList(
-            textInput(ns("h5key"),  placeholder = paste(typ, "experiment key", sep=" "),tags$span(style="font-weight: normal;","h5 experiment key"))
+            textInput(ns("h5key"),  placeholder = paste(typ, "experiment key", sep=" "),tags$span(style="font-weight: normal;","h5 experiment key")),
+            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
+            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
           )
         })
       }else if(class=="Seurat"){
