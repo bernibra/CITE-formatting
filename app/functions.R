@@ -202,7 +202,7 @@ makelist_4 <- function(values, input, type="data"){
   }else{
     if(!is.null(values[[paste0("Impossiblefiles-",type)]])){
       other <- values[[paste0("Impossiblefiles-",type)]]
-      if(type=="group" & length(unique(other))==1){
+      if((type=="group" & length(unique(other)) | type!="data")==1){
         other <- NULL
       }
       return(list(other = other))
