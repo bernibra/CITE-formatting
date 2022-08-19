@@ -200,8 +200,8 @@ makelist_4 <- function(values, input, type="data"){
       }
     }
   }else{
-    if(!is.null(values[[paste0("GEOmetadata-",type)]])){
-      other <- values[[paste0("GEOmetadata-",type)]]
+    if(!is.null(values[[paste0("Impossiblefiles-",type)]])){
+      other <- values[[paste0("Impossiblefiles-",type)]]
       if(type=="group" & length(unique(other))==1){
         other <- NULL
       }
