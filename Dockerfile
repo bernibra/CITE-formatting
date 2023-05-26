@@ -26,7 +26,6 @@ RUN addgroup --system app \
     && adduser --system --ingroup app app
 WORKDIR /home
 COPY app ./app/
-COPY docu ./docu/
 COPY data ./data/
 RUN chown app:app -R /home/app/
 RUN chown app:app -R /home/data

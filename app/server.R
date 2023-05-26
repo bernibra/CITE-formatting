@@ -422,11 +422,11 @@ server <- function(input, output, session) {
       output$load_line = renderUI(hr())
       shinyjs::disable("download_stepthree")
       shinyjs::disable("download_stepfour")
-      output$selected_var <- renderUI({includeMarkdown("../docu/geo-load.md")})
+      output$selected_var <- renderUI({includeMarkdown("docu/geo-load.md")})
       output$load_stepone = renderUI({
         tagList(
           h4("Load data"),
-          includeMarkdown("../docu/geo-load-2.md"),
+          includeMarkdown("docu/geo-load-2.md"),
           selectInput("download_one_file", "pick one", values$pdata %>% select(input$columns) %>%
                         filter_at(1, all_vars(grepl(regfilter(input$keyword_protein, input$keyword_rna,input$keyword_hto), .))) %>% pull(input$columns)),
           actionButton("geodownloadone", "download example"),
@@ -450,7 +450,7 @@ server <- function(input, output, session) {
       output$load_stepone = renderUI({
         tagList(
           h4("Load data"),
-          includeMarkdown("../docu/geo-load-3.md"),
+          includeMarkdown("docu/geo-load-3.md"),
           output$selected_var <- NULL
         )
       })
@@ -565,24 +565,24 @@ server <- function(input, output, session) {
   observeEvent(input$dataset,
                {
                  if (input$dataset=="na") {
-                   output$selected_var <- renderUI({includeMarkdown("../docu/entry-page.md")})
+                   output$selected_var <- renderUI({includeMarkdown("docu/entry-page.md")})
                  }else if(input$dataset=="impossible"){
-                   output$selected_var <- renderUI({includeMarkdown("../docu/manual-download.md")})
+                   output$selected_var <- renderUI({includeMarkdown("docu/manual-download.md")})
                    addDownloadlinkServer("Impossiblefiles", values, withoutlink=T)
                  }else if(input$dataset=="geo"){
-                   output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
+                   output$selected_var <- renderUI({includeMarkdown("docu/geo-download.md")})
                    addDownloadlinkServer("GEOproteindata", values)
                    addDownloadlinkServer("GEOrnadata", values)
                    addDownloadlinkServer("GEOhtodata", values)
                    addDownloadlinkServer("GEOmetadata", values)
                  }else if(input$dataset=="wget"){
-                   output$selected_var <- renderUI({includeMarkdown("../docu/wget-download.md")})
+                   output$selected_var <- renderUI({includeMarkdown("docu/wget-download.md")})
                    addDownloadlinkServer("GEOproteindata", values)
                    addDownloadlinkServer("GEOrnadata", values)
                    addDownloadlinkServer("GEOhtodata", values)
                    addDownloadlinkServer("GEOmetadata", values)
                  }else{
-                   output$selected_var <- renderUI({includeMarkdown("../docu/geo-download.md")})
+                   output$selected_var <- renderUI({includeMarkdown("docu/geo-download.md")})
                    addDownloadlinkServer("GEOproteindata", values)
                    addDownloadlinkServer("GEOrnadata", values)
                    addDownloadlinkServer("GEOhtodata", values)
@@ -709,3 +709,6 @@ server <- function(input, output, session) {
   #   session$reload()
   #   })
 }
+
+
+# rsconnect::deployApp(appDir = ".", appName = "cite-formatting", appFiles = c( "global.R", "server.R", "ui.R", "functions.R", paste0("./docu/", list.files("./docu/"))))
