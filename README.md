@@ -1,6 +1,8 @@
-# CITE-formatting
+# [CITE-formatting](https://bernibra.shinyapps.io/cite-formatting/)
 
 This is a app designed to complement the [CITE-wrangling](https://github.com/bernibra/CITE-wrangling) pipeline, simplifying the process of adding new datasets.
+
+To use the app, you can either use this [link](https://bernibra.shinyapps.io/cite-formatting/) or installing it locally following the steps below:
 
 ### 1. Requirements
 
