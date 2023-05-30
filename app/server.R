@@ -669,7 +669,7 @@ server <- function(input, output, session) {
                                  ),
                   load=makelist_3(input),
                   metadata=list(doi=input$doi,
-                        description=ifelse_(input$description,NULL, input$description),
+                        description=ifelse_(input$description,NULL, gsub("\r?\n|\r", " ", input$description)),
                         tissue=ifelse_(input$tissue,NULL, input$tissue),
                         species=ifelse_(input$species,NULL, input$species),
                         alias=input$alias,
