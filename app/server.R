@@ -35,6 +35,7 @@ askextraclassServer <- function(id, class, typ){
             textInput(ns("cells"),  placeholder = "pattern for cell file", label = tags$span(style="font-weight: normal;","cells")),
             textInput(ns("replace"),  placeholder = "matrix file name", label = tags$span(style="font-weight: normal;","matrix name")),
             numericInput(ns("column"), label = tags$span(style="font-weight: normal;","column used in the features file"),   min = 1,value=1),
+            numericInput(ns("feature_drop_or_keep"), label = tags$span(style="font-weight: normal;","column to keep/drop"),   min = 1,value=1),            
             textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
             textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
           )
@@ -711,4 +712,6 @@ server <- function(input, output, session) {
 }
 
 
-# rsconnect::deployApp(appDir = ".", appName = "cite-formatting", appFiles = c( "global.R", "server.R", "ui.R", "functions.R", paste0("./docu/", list.files("./docu/"))))
+library(BiocManager)
+options(repos = BiocManager::repositories())
+rsconnect::deployApp(appDir = ".", appName = "cite-formatting", appFiles = c( "global.R", "server.R", "ui.R", "functions.R", paste0("./docu/", list.files("./docu/"))))

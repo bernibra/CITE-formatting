@@ -78,6 +78,7 @@ makelist_2 <- function(input, type){
       access = ifelse_(input[[paste0("load_",type,"-extra_class-access")]], NULL,  input[[paste0("load_",type,"-extra_class-access")]]),
       drop = ifelse_(input[[paste0("load_",type,"-extra_class-drop")]], NULL,  input[[paste0("load_",type,"-extra_class-drop")]]),
       keep = ifelse_(input[[paste0("load_",type,"-extra_class-keep")]], NULL,  input[[paste0("load_",type,"-extra_class-keep")]]),
+      feature_drop_or_keep = input[[paste0("load_",type,"-extra_class-feature_drop_or_keep")]],
       coldata = ifelse_(input[[paste0("load_",type,"-coldata")]], NULL,
                         stringr::str_trim(strsplit(x = input[[paste0("load_",type,"-coldata")]], split = ";")[[1]])),
       cells = ifelse_(input[[paste0("load_",type,"-extra_class-cells")]], NULL,  input[[paste0("load_",type,"-extra_class-cells")]]),
