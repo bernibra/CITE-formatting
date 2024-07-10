@@ -16,9 +16,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN install.r shiny shinyalert bslib dplyr purrr stringr markdown shinyjs 
 
-RUN Rscript -e "install.packages('BiocManager')"
+RUN R -e 'install.packages("remotes")'
+
+RUN Rscript -e 'remotes::install_version("BiocManager",upgrade="never", version = "1.30.23")'
 
 RUN Rscript -e "BiocManager::install(c('Biobase','GEOquery', 'ArrayExpress'), version = BiocManager::version())"
+
+RUN Rscript -e 'remotes::install_version("yaml",upgrade="never", version = "2.3.8")'
 
 RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" > /usr/lib/R/etc/Rprofile.site
 

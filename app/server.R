@@ -154,10 +154,10 @@ dataModal <- function(ns, failed = FALSE, withoutlink=F) {
       ),
       span('make sure the url is public and working'),
       
-      textInput(ns("group"), "grouping level",
-                placeholder = "e.g. Mouse"
+      textInput(ns("group"), "grouping factor",
+                placeholder = "e.g. sample1"
       ),
-      span('optional field if you want to group different files'),
+      span('optional field if you want to group different files. This will regex match the files names containing this word/factor, so that files that belong to, for example, the same sample are processed together.'),
       
       if (failed)
         div(tags$b("Invalid name file or url", style = "color: red;")),
@@ -484,9 +484,15 @@ server <- function(input, output, session) {
     }
   })
   
-  observeEvent(c(input[["load_protein-class"]], input[["load_rna-class"]], input[["load_hto-class"]]), {
+  observeEvent(input[["load_protein-class"]], {
     askextraclassServer('load_protein-extra_class', class=input[["load_protein-class"]], typ="protein")
+  })
+  
+  observeEvent(input[["load_rna-class"]], {
     askextraclassServer('load_rna-extra_class', class=input[["load_rna-class"]], typ="rna")
+  })
+  
+  observeEvent(input[["load_hto-class"]], {
     askextraclassServer('load_hto-extra_class', class=input[["load_hto-class"]], typ="hto")
   })
   
@@ -499,10 +505,10 @@ server <- function(input, output, session) {
         radioButtons('sampleoption', 
                      label=tags$span(style="font-weight: normal;","Adding sample information can be done in different ways:"),
                      choices = c("No sample information"="na",
-                                 'if the sample information is already one of the columns, set as colData (see on the left), one can simply define the column name.'="sampleid",
+                                 'if the sample information is already one of the columns, set as colData (see on the left), one can simply define the column name (or multiple columns separated by a semicolon).'="sampleid",
                                  "if the sample information is found in an extermal file, the pipeline will assume that there are one or more columns that define the sample id. At first, it will look for the data in the metadata folder; if nothing is found, it will look in the folder of the experiment.
 "="extfile",
-                                 "if samples are separated by file, but there are different types of files (different tissues or experiments) that need to be separately considered, one can define groups of files that will be considered separately."="sample_group"),
+                                 "if samples are separated by file, but there are different types of files (different tissues or experiments) that need to be considered separately, one can define these groups of files using different regex patterns."="sample_group"),
                      selected = "na"),
         uiOutput("additional_samples"),
         fluidRow(
@@ -524,7 +530,7 @@ server <- function(input, output, session) {
       output$additional_samples <- NULL
     }else if(input$sampleoption=="sampleid"){
       output$additional_samples <- renderUI({
-        textInput("sampleid", label=labelMandatory(tags$span(style="font-weight: normal;","column name")), placeholder = "column in colData")
+        textInput("sampleid", label=labelMandatory(tags$span(style="font-weight: normal;","column/s name/s")), placeholder = "column in colData")
       })
       shinyjs::disable("downloadData")
     }else if(input$sampleoption=="extfile"){
@@ -712,6 +718,6 @@ server <- function(input, output, session) {
 }
 
 
-library(BiocManager)
-options(repos = BiocManager::repositories())
-rsconnect::deployApp(appDir = ".", appName = "cite-formatting", appFiles = c( "global.R", "server.R", "ui.R", "functions.R", paste0("./docu/", list.files("./docu/"))))
+# library(BiocManager)
+# options(repos = BiocManager::repositories())
+# rsconnect::deployApp(appDir = ".", appName = "cite-formatting", appFiles = c( "global.R", "server.R", "ui.R", "functions.R", paste0("./docu/", list.files("./docu/"))))

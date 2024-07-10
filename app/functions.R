@@ -88,7 +88,7 @@ makelist_2 <- function(input, type){
       sample_groups = ifelse_(input$samplegroups, NULL,
                               stringr::str_trim(strsplit(x = input$samplegroups, split = ";")[[1]])),
       samples = ifelse__(input$sampleoption=="na", NULL,
-                         ifelse__(is.null(input$samplefile),  input$sampleid,
+                         ifelse__(is.null(input$samplefile),  stringr::str_trim(strsplit(x = input$sampleid, split = ";")[[1]]),
                                   list(file=input$samplefile,
                                        key=input$samplekey,
                                        value=stringr::str_trim(strsplit(x = input$samplevalue, split = ";")[[1]]))))
