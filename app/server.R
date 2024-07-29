@@ -1,3 +1,14 @@
+##### TODO ######
+# HTO include: shouldn't it disapear if unclicked?
+# Donlowad regerate all. Some things do not update
+# Column in ColData example
+# Sometimes adding urls might result in the link added twice. Why? Is it because it runs twice? Potentially setting priorities
+# Metadata: disable input field after "Load"
+# Mtx "matrix name" is the full name, which is not clear. Also, why mtx and not .mtx.gz or without .mtx
+# Mtx input. There is the "columns to drop" field, where the example says: "rows ot drop". Which one is it?
+# Common features common cells????
+# Help button for every dataset
+# mtx: skip.cell and skip.feature, and also make things more understandable
 
 ##### Module for asking extra attributes to class load
 askextraclass <- function(id){
@@ -15,44 +26,90 @@ askextraclassServer <- function(id, class, typ){
         output$controls <-  renderUI({
           ns <- session$ns
           tagList(
-            textInput(ns("h5key"),  placeholder = paste(typ, "experiment key", sep=" "),tags$span(style="font-weight: normal;","h5 experiment key")),
-            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
-            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
+            bsplus::use_bs_tooltip(),
+            textInput(ns("h5key"),  placeholder = paste(typ, "experiment key", sep=" "),tags$span(style="font-weight: normal;","h5 experiment key"))%>%
+              bsplus::bs_embed_tooltip("This should be the experiment name that needs to be accessed. Usually something like 'RNA' and 'ADT'", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop"))%>%
+              bsplus::bs_embed_tooltip("This pattern should match rownames for markers that need to be dropped in rows.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))%>%
+              bsplus::bs_embed_tooltip("This pattern should match rownames for markers that need to be keeped in rows.", delay = "dseconds(0)", placement = "right")
           )
         })
       }else if(class=="Seurat"){
         output$controls <-  renderUI({
           ns <- session$ns
           tagList(
-            textInput(ns("altexp"),  placeholder = paste(typ, "experiment key", sep=" "), label = tags$span(style="font-weight: normal;","Seurat experiment key"))
+            bsplus::use_bs_tooltip(),
+            textInput(ns("altexp"),  placeholder = paste(typ, "experiment key", sep=" "), label = tags$span(style="font-weight: normal;","Seurat experiment key"))%>%
+              bsplus::bs_embed_tooltip("This should be the experiment name that needs to be accessed. Usually something like 'RNA' and 'ADT'", delay = "dseconds(0)", placement = "right")
           )
         })
       }else if(class=="mtx"){
         output$controls <-  renderUI({
           ns <- session$ns
           tagList(
-            textInput(ns("features"),  placeholder = "pattern for features file", label = tags$span(style="font-weight: normal;","features")),
-            textInput(ns("cells"),  placeholder = "pattern for cell file", label = tags$span(style="font-weight: normal;","cells")),
-            textInput(ns("replace"),  placeholder = "matrix file name", label = tags$span(style="font-weight: normal;","matrix name")),
-            numericInput(ns("column"), label = tags$span(style="font-weight: normal;","column used in the features file"),   min = 1,value=1),
-            numericInput(ns("feature_drop_or_keep"), label = tags$span(style="font-weight: normal;","column to keep/drop"),   min = 1,value=1),            
-            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
-            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
+            bsplus::use_bs_tooltip(),
+            textInput(ns("features"),  placeholder = "pattern for features file",
+                      label = tags$span(style="font-weight: normal;","features")) %>%
+              bsplus::bs_embed_tooltip("This pattern should distinguish the feature file from the rest.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("cells"),  placeholder = "pattern for cell file", 
+                      label = tags$span(style="font-weight: normal;","cells"))%>%
+              bsplus::bs_embed_tooltip("This pattern should distinguish the cell file from the rest.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("replace"),  placeholder = "full matrix file name", 
+                      label = tags$span(style="font-weight: normal;","matrix name")) %>%
+              bsplus::bs_embed_tooltip("Include the full name for the matrix file here.", delay = "dseconds(0)", placement = "right"),
+            numericInput(ns("column"), 
+                         label = tags$span(style="font-weight: normal;","column used in the features file"),
+                         min = 1,value=2) %>%
+              bsplus::bs_embed_tooltip("Specify which column of features files to use for feature/gene names; default is 2.", delay = "dseconds(0)", placement = "right"),
+            numericInput(ns("column.cell"), 
+                         label = tags$span(style="font-weight: normal;","column used in the cell file"),
+                         min = 1,value=1) %>%
+              bsplus::bs_embed_tooltip("Specify which column of cells file to use for cell names; default is 1", delay = "dseconds(0)", placement = "right"),
+            numericInput(ns("skip.feature"),
+                         label = tags$span(style="font-weight: normal;","rows to skip in the features file"),
+                         min = 0,value=0) %>%
+              bsplus::bs_embed_tooltip("Number of lines to skip in the features file before beginning to gene names.", delay = "dseconds(0)", placement = "right"),
+            numericInput(ns("skip.cell"), 
+                         label = tags$span(style="font-weight: normal;","rows to skip in the cell file"),
+                         min = 0,value=0) %>%
+              bsplus::bs_embed_tooltip("Number of lines to skip in the cells file before beginning to read cell names.", delay = "dseconds(0)", placement = "right"),
+            numericInput(ns("feature_drop_or_keep"),
+                         label = tags$span(style="font-weight: normal;","column to keep/drop"),
+                         min = 1,value=2) %>%
+              bsplus::bs_embed_tooltip("Specify which column of features files to use for filtering markers.", delay = "dseconds(0)", placement = "right"),            
+            textInput(ns("drop"),  placeholder = "pattern used to drop rows",
+                      label = tags$span(style="font-weight: normal;","columns to drop")) %>%
+              bsplus::bs_embed_tooltip("This pattern should match those markers to drop in the selected feature column.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("keep"),  placeholder = "pattern used to keep rows",
+                      label = tags$span(style="font-weight: normal;","columns to keep")) %>%
+              bsplus::bs_embed_tooltip("This pattern should match those markers to keep in the selected feature column.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("cell.sep"),  placeholder = "e.g. ,",
+                      label = tags$span(style="font-weight: normal;","delimiter for the cell file")) %>%
+              bsplus::bs_embed_tooltip("Specify the delimiter in the cell name file. Do not add quotation marks, simply type the separator.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("feature.sep"),  placeholder = "e.g. \t", 
+                      label = tags$span(style="font-weight: normal;","delimiter for the feature file")) %>%
+              bsplus::bs_embed_tooltip("Specify the delimiter in the feature name file. Do not add quotation marks, simply type the separator.", delay = "dseconds(0)", placement = "right")
           )
         })
       }else if(class=="access"){
         output$controls <-  renderUI({
           ns <- session$ns
           tagList(
-            textInput(ns("access"),  placeholder = paste(typ, "access key", sep=" "), label = tags$span(style="font-weight: normal;","R access key"))
+            bsplus::use_bs_tooltip(),
+            textInput(ns("access"),  placeholder = paste(typ, "e.g. x@assay$CITE@raw.data", sep=" "), label = tags$span(style="font-weight: normal;","R access key"))%>%
+              bsplus::bs_embed_tooltip("This allows you to deal with free-format objects that require some special access. Assume the object is named 'x' and add the one-line R code to access the data.", delay = "dseconds(0)", placement = "right")
           )
         })
       }else if(class=="rds" | class=="csv" | class=="fastcsv"){
         output$controls <-  renderUI({
           ns <- session$ns
           tagList(
-            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop")),
-            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))
+            bsplus::use_bs_tooltip(),
+            textInput(ns("drop"),  placeholder = "pattern used to drop rows", label = tags$span(style="font-weight: normal;","columns to drop"))%>%
+              bsplus::bs_embed_tooltip("This pattern should match rownames for markers that need to be dropped in rows.", delay = "dseconds(0)", placement = "right"),
+            textInput(ns("keep"),  placeholder = "pattern used to keep rows", label = tags$span(style="font-weight: normal;","columns to keep"))%>%
+              bsplus::bs_embed_tooltip("This pattern should match rownames for markers that need to be kept in rows.", delay = "dseconds(0)", placement = "right")
           )
         })
       }else{

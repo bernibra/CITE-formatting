@@ -3,6 +3,7 @@
 ui <- fluidPage(
   shinyjs::useShinyjs(),
   shinyjs::inlineCSS(appCSS),
+  bsplus::use_bs_tooltip(),
   title = "Prepare CITE-seq dataset",
   shiny::div(class="loadmessage",p("Loading...")),
   shiny::tags$script(sprintf(
@@ -21,7 +22,7 @@ ui <- fluidPage(
   div(class="container",
     div(id = "header",
         fluidRow(
-          h2("Prepare CITE-seq dataset"),
+          h2("Prepare CITE-seq dataset")
           ),
         fluidRow(
           h4("An app for adding new datasets to ",

@@ -24,6 +24,10 @@ RUN Rscript -e "BiocManager::install(c('Biobase','GEOquery', 'ArrayExpress'), ve
 
 RUN Rscript -e 'remotes::install_version("yaml",upgrade="never", version = "2.3.8")'
 
+RUN Rscript -e 'remotes::install_version("shinyBS",upgrade="never", version = "0.61.1")'
+
+RUN Rscript -e 'remotes::install_version("bsplus",upgrade="never", version = "0.1.4")'
+
 RUN echo "local(options(shiny.port = 3838, shiny.host = '0.0.0.0'))" > /usr/lib/R/etc/Rprofile.site
 
 RUN addgroup --system app \

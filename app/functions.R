@@ -85,6 +85,11 @@ makelist_2 <- function(input, type){
       replace = ifelse_(input[[paste0("load_",type,"-extra_class-replace")]], NULL,  input[[paste0("load_",type,"-extra_class-replace")]]),
       features = ifelse_(input[[paste0("load_",type,"-extra_class-features")]], NULL,  input[[paste0("load_",type,"-extra_class-features")]]),
       column = input[[paste0("load_",type,"-extra_class-column")]],
+      column.cell = input[[paste0("load_",type,"-extra_class-column.cell")]],
+      skip.feature = input[[paste0("load_",type,"-extra_class-skip.feature")]],
+      skip.cell = input[[paste0("load_",type,"-extra_class-skip.cell")]],
+      cell.sep = ifelse_(input[[paste0("load_",type,"-extra_class-cell.sep")]], NULL,  input[[paste0("load_",type,"-extra_class-cell.sep")]]),
+      feature.sep = ifelse_(input[[paste0("load_",type,"-extra_class-feature.sep")]], NULL,  input[[paste0("load_",type,"-extra_class-feature.sep")]]),
       sample_groups = ifelse_(input$samplegroups, NULL,
                               stringr::str_trim(strsplit(x = input$samplegroups, split = ";")[[1]])),
       samples = ifelse__(input$sampleoption=="na", NULL,
@@ -243,4 +248,19 @@ ifelse_ <- function(x, y, z, include_empty=T){
       return(z)
     }
   }
+}
+
+bslibTooltip <- function(
+    id, title, placement = "bottom", trigger = "hover", options = NULL
+){
+  options = shinyBS:::buildTooltipOrPopoverOptionsList(title, placement, trigger, options)
+  options = paste0("{'", paste(names(options), options, sep = "': '", collapse = "', '"), "'}")
+  bsTag <- tags$script(HTML(paste0("
+    $(document).ready(function() {
+      opts = $.extend(", options, ", {html: true});
+      setTimeout(function() {
+        $('#", id, "').tooltip('dispose').tooltip(opts);
+      }, 500)
+    });
+  ")))
 }
