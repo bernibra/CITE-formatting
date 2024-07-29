@@ -1,14 +1,9 @@
 ##### TODO ######
-# HTO include: shouldn't it disapear if unclicked?
 # Donlowad regerate all. Some things do not update
 # Column in ColData example
 # Sometimes adding urls might result in the link added twice. Why? Is it because it runs twice? Potentially setting priorities
 # Metadata: disable input field after "Load"
-# Mtx "matrix name" is the full name, which is not clear. Also, why mtx and not .mtx.gz or without .mtx
-# Mtx input. There is the "columns to drop" field, where the example says: "rows ot drop". Which one is it?
-# Common features common cells????
 # Help button for every dataset
-# mtx: skip.cell and skip.feature, and also make things more understandable
 
 ##### Module for asking extra attributes to class load
 askextraclass <- function(id){
